@@ -96,4 +96,39 @@
 
 
 
+# Chapter02 使用基本元素：Thread 和 Runnable
+
+
+## Java 中的线程
+
+创建执行线程有两种方法。
+- 扩展 Thread 类，并重载`run()`方法。
+- 实现 Runnable 接口，并将该类的对象传递给 Thread 对象的构造函数。
+
+这两种情况下都会得到一个 Thread 对象，但是相对于第一种方式来说，更推荐使用第二种。
+- Runnable 是一个接口：可以实现其他接口并扩展其他类。对于采用 Thread 类的方式，只能扩展这一个类。
+- 可以通过线程来执行 Runnable 对象，但也可以通过其他类似执行器的Java并发对象来执行。
+- 可以通过不同线程使用同一 Runnable 对象。一旦有了 Thread 对象，就必须使用`start()`方法创建新的执行线程并且执行 Thread 类的`run()`方法。如果直接调用`run()`方法，那么将调用常规Java方法而不会创建新的执行线程。
+
+Java中的所有线程都有一个优先级，这个整数值介于`Thread.MIN_PRIORITY`和`Thread.MAX_PRIORITY`之间，所有线程在创建时其默认优先级都是`Thread.NORM_PRIORITY`。
+
+线程所有可能的状态都在`Thread.States`类中定义。
+- NEW：Thread 对象已经创建，但是还没有开始执行。
+- RUNNABLE：Thread 对象正在Java 虚拟机中运行。
+- BLOCKED：Thread 对象正在等待锁定。
+- WAITING：Thread 对象正在等待另一个线程的动作。
+- TIME_WAITING：Thread 对象正在等待另一个线程的操作，但是有时间限制。
+- THREAD：Thread 对象已经完成了执行。
+
+Thread类的其他常用方法。
+- getId()：该方法返回 Thread 对象的标识符。该标识符是在线程创建时分配的一个正整数。在线程的整个生命周期中是唯一且无法改变的。
+- getName()/setName()：这两种方法允许你获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在Thread 类的构造函数中建立。
+- getPriority()/setPriority()：你可以使用这两种方法来获取或设置 Thread 对象的优先级
+- isDaemon()/setDaemon()：这两种方法允许你获取或建立 Thread 对象的守护条件。
+- getState()：该方法返回Thread 对象的状态。
+- interrupt()/interrupted()/isInterrupted()：第一种方法表明你正在请求结束执行某个 Thread 对象。另外两种方法可用于检查中断状态。这些方法的主要区别在于，调用`interrupted()`方法时将清除中断标志的值， 而`isInterrupted()`方法不会。调用`interrupt()`方法不会结束 Thread 对象的执行。Thread 对象负责检查标志的状态并做出相应的响应。
+- sleep()：该方法允许你将线程的执行暂停一段时间。它将接收一个 long 型值作为参数，该值代表你想要 Thread 对象暂停执行的毫秒数。
+- join()：这个方法将暂停调用线程的执行，直到调用该方法的线程执行结束为止。可以使用该方法等待另一个 Thread 对象结束。
+- setUncaughtExceptionHandler()：当线程执行出现未校验异常时，该方法用于建立未校验异常的控制器。
+- currentThread()：这是Thread 类的静态方法，它返回实际执行该代码的 Thread 对象。
 
