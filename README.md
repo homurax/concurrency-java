@@ -64,7 +64,7 @@ ConcurrentSkipListMap：非阻塞型的NavigableMap。
 ConcurrentHashMap：非阻塞型的哈希表。  
 AtomicBoolean、AtomicInteger、AtomicLong 和AtomicReference：基本Java数据类型的原子实现。  
 
-**并发设计模式**
+**并发设计模式**  
 信号模式：ReentrantLock、Semaphore 或是 `Object` 类中的 `wait()` 方法和 `notify()` 方法。  
 会合模式：信号模式的推广。第一个任务将等待第二个任务的某一事件，而第二个任务又在等待第一个任务的某一事件。  
 互斥模式：临界段(ReentrantLock、Semaphore)，保护一段代码或者一个完整的方法(synchronized)。  
