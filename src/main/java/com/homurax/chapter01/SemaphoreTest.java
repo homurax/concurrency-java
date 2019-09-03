@@ -5,7 +5,7 @@ import java.util.concurrent.Semaphore;
 
 public class SemaphoreTest {
 
-    // 多元复用
+    // 多元复用 规定数目的任务可以同时执行临界段
     public static void main(String[] args) {
 
         SemaphoreTest output = new SemaphoreTest();
