@@ -121,16 +121,16 @@ Java中的所有线程都有一个优先级，这个整数值介于`Thread.MIN_P
 - THREAD：Thread 对象已经完成了执行。
 
 Thread类的其他常用方法。
-- getId()：该方法返回 Thread 对象的标识符。该标识符是在线程创建时分配的一个正整数。在线程的整个生命周期中是唯一且无法改变的。
-- getName()/setName()：这两种方法允许你获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在Thread 类的构造函数中建立。
-- getPriority()/setPriority()：你可以使用这两种方法来获取或设置 Thread 对象的优先级
-- isDaemon()/setDaemon()：这两种方法允许你获取或建立 Thread 对象的守护条件。
-- getState()：该方法返回Thread 对象的状态。
-- interrupt()/interrupted()/isInterrupted()：第一种方法表明你正在请求结束执行某个 Thread 对象。另外两种方法可用于检查中断状态。这些方法的主要区别在于，调用`interrupted()`方法时将清除中断标志的值， 而`isInterrupted()`方法不会。调用`interrupt()`方法不会结束 Thread 对象的执行。Thread 对象负责检查标志的状态并做出相应的响应。
-- sleep()：该方法允许你将线程的执行暂停一段时间。它将接收一个 long 型值作为参数，该值代表你想要 Thread 对象暂停执行的毫秒数。
-- join()：这个方法将暂停调用线程的执行，直到调用该方法的线程执行结束为止。可以使用该方法等待另一个 Thread 对象结束。
-- setUncaughtExceptionHandler()：当线程执行出现未校验异常时，该方法用于建立未校验异常的控制器。
-- currentThread()：这是Thread 类的静态方法，它返回实际执行该代码的 Thread 对象。
+- `getId()`：该方法返回 Thread 对象的标识符。该标识符是在线程创建时分配的一个正整数。在线程的整个生命周期中是唯一且无法改变的。
+- `getName()`/`setName()`：这两种方法允许你获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在Thread 类的构造函数中建立。
+- `getPriority()`/`setPriority()`：你可以使用这两种方法来获取或设置 Thread 对象的优先级
+- `isDaemon()`/`setDaemon()`：这两种方法允许你获取或建立 Thread 对象的守护条件。
+- `getState()`：该方法返回Thread 对象的状态。
+- `interrupt()`/`interrupted()`/`isInterrupted()`：第一种方法表明你正在请求结束执行某个 Thread 对象。另外两种方法可用于检查中断状态。这些方法的主要区别在于，调用`interrupted()`方法时将清除中断标志的值， 而`isInterrupted()`方法不会。调用`interrupt()`方法不会结束 Thread 对象的执行。Thread 对象负责检查标志的状态并做出相应的响应。
+- `sleep()`：该方法允许你将线程的执行暂停一段时间。它将接收一个 long 型值作为参数，该值代表你想要 Thread 对象暂停执行的毫秒数。
+- `join()`：这个方法将暂停调用线程的执行，直到调用该方法的线程执行结束为止。可以使用该方法等待另一个 Thread 对象结束。
+- `setUncaughtExceptionHandler()`：当线程执行出现未校验异常时，该方法用于建立未校验异常的控制器。
+- `currentThread()`：这是Thread 类的静态方法，它返回实际执行该代码的 Thread 对象。
 
 
 
@@ -156,13 +156,20 @@ Thread类的其他常用方法。
 - Executors 类：该类为创建 Executor 对象和其他相关类提供了实用方法。
 
 
+## 其他重要方法
 
+通常阻塞型数据结构也会实现具有非阻塞型行为的方法，而非阻塞型数据结构并不会实现阻塞型方法。
 
+实现**阻塞型**操作的方法如下。
+- `put()`、`putFirst()`、`putLast()`：这些方法将一个元素插入数据结构。如果该数据结构已满，则会阻塞该线程，直到出现空间为止。
+- `take()`、`takeFirst()`、`takeLast()`：这些方法返回并且删除数据结构中的一个元素。如果该数据结构为空，则会阻塞该线程直到其中有元素为止。
 
-
-
-
-
-
+实现**非阻塞型**操作的方法如下。
+- `add()`、`addFirst()`、`addLast()`：这些方法将一个元素插入数据结构。如果该数据结构已满，则会抛出一个 IllegalStateException 异常。
+- `remove()`、`removeFirst()`、`removeLast()`：这些方法将返回并且删除数据结构中的一个元素。如果该结构为空，则这些方法将抛出一个 IllegalStateException 异常。
+- `element()`、`getFirst()`、`getLast()`：这些方法将返回但是不删除数据结构中的一个元素。如果该数据结构为空，则会抛出一个 IllegalStateException 异常。
+- `offer()`、`offerFirst()`、`offerLast()`：这些方法可以将一个元素插入数据结构。如果该结构已满，则返回一个 Boolean 值 false。
+- `poll()`、`pollFirst()`、`pollLast()`：这些方法将返回并且删除数据结构中的一个元素。如果该结构为空，则返回 null 值。
+- `peek()`、`peekFirst()`、`peekLast()`：这些方法返回但是并不删除数据结构中的一个元素。如果该数据结构为空，则返回 null 值。
 
 
