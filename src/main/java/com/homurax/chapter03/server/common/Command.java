@@ -11,7 +11,7 @@ public abstract class Command {
 
     public Command(String[] command) {
         this.command = command;
-        setCacheable(true);
+        this.cacheable = true;
     }
 
 

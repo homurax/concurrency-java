@@ -1,6 +1,6 @@
 # Chapter01 第一步：并发设计原理
 
-## 1. 基本的概念
+## 1.1 基本的概念
 
 关于并发，最被人们认可的定义是，在单个处理器上采用单核执行多个任务即为并发。  
 对于并行来说也有同样的定义：同一时间在不同的计算机、处理器或处理器核心上同时运行多个任务，就是所谓的“并行”。  
@@ -18,7 +18,7 @@
 **原子变量**是一种通过原子操作来设置和获取其值的变量。可以使用某种同步机制来实现一个原子变量，或者也可以使用CAS 以无锁方式来实现一个原子变量，而这种方式并不需要任何同步机制。  
 
 
-## 2. 可能出现的问题
+## 1.2 可能出现的问题
 
 - 数据竞争
 - 死锁 
@@ -27,9 +27,9 @@
 - 优先权反转：一个低优先权的任务持有了一个高优先级任务所需的资源。  
 
 
-## 3. Java并发API
+## 1.3 Java并发API
 
-**执行器**  
+### 执行器
 
 - [Interface Executor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html)
 - [Interface ExecutorService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html)
@@ -37,7 +37,7 @@
 - [Class ScheduledThreadPoolExecutor](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)
 - [Class Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html)
 
-**同步机制**  
+### 同步机制
 
 - [Class ReentrantLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantLock.html)
 - [Class ReentrantReadWriteLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html)
@@ -45,15 +45,15 @@
 - [Class CountDownLatch](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountDownLatch.html)
 - [Class CyclicBarrier](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CyclicBarrier.html)
 
-**Fork/Join 框架**  
+### Fork/Join 框架
 
 - ForkJoinPool：该类实现了要用于运行任务的执行器。
 - ForkJoinTask：这是一个可以在ForkJoinPool 类中执行的任务。
 - ForkJoinWorkerThread：这是一个准备在ForkJoinPool 类中执行任务的线程。
 
-**并发数据结构**  
+### 并发数据结构 
 
-阻塞型数据结构：这些数据结构含有一些能够阻塞调用任务的方法，例如，当数据结构为空而你又要从中获取值时。  
+阻塞型数据结构：这些数据结构含有一些能够阻塞调用任务的方法，例如，当数据结构为空而又要从中获取值时。  
 非阻塞型数据结构：如果操作可以立即进行，它并不会阻塞调用任务。否则，它将返回null值或者抛出异常。  
 
 - ConcurrentLinkedDeque：非阻塞型的列表。
@@ -65,7 +65,7 @@
 - ConcurrentHashMap：非阻塞型的哈希表。
 - AtomicBoolean、AtomicInteger、AtomicLong 和AtomicReference：基本Java数据类型的原子实现。
 
-**并发设计模式**  
+### 并发设计模式
 
 - 信号模式：ReentrantLock、Semaphore 或是 `Object` 类中的 `wait()` 方法和 `notify()` 方法。  
 - 会合模式：信号模式的推广。第一个任务将等待第二个任务的某一事件，而第二个任务又在等待第一个任务的某一事件。  
@@ -78,13 +78,13 @@
 - 线程局部存储模式：ThreadLocal 。  
 
 
-## 4. 设计并发算法的提示和技巧
+## 1.4 设计并发算法的提示和技巧
 
 - 正确识别独立任务：使用并发还是串行。  
 - 在尽可能高的层面上实施并发处理  
 - 考虑伸缩性  
 - 使用线程安全API  
-- 绝不要假定执行顺序：如果你不采用任何同步机制，那么在并发应用程序中任务的执行顺序是不确定的。任务执行的顺序以及每个任务执行的时间，是由操作系统的调度器所决定的。  
+- 绝不要假定执行顺序：如果不采用任何同步机制，那么在并发应用程序中任务的执行顺序是不确定的。任务执行的顺序以及每个任务执行的时间，是由操作系统的调度器所决定的。  
 - 在静态和共享场合尽可能使用局部线程变量  
 - 寻找更易于并行处理的算法版本  
 - 尽可能使用不可变对象  
@@ -99,7 +99,7 @@
 # Chapter02 使用基本元素：Thread 和 Runnable
 
 
-## Java 中的线程
+## 2.1 Java 中的线程
 
 创建执行线程有两种方法。
 - 扩展 Thread 类，并重载`run()`方法。
@@ -122,12 +122,12 @@ Java中的所有线程都有一个优先级，这个整数值介于`Thread.MIN_P
 
 Thread类的其他常用方法。
 - `getId()`：该方法返回 Thread 对象的标识符。该标识符是在线程创建时分配的一个正整数。在线程的整个生命周期中是唯一且无法改变的。
-- `getName()`/`setName()`：这两种方法允许你获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在Thread 类的构造函数中建立。
-- `getPriority()`/`setPriority()`：你可以使用这两种方法来获取或设置 Thread 对象的优先级
-- `isDaemon()`/`setDaemon()`：这两种方法允许你获取或建立 Thread 对象的守护条件。
+- `getName()`/`setName()`：这两种方法允许获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在Thread 类的构造函数中建立。
+- `getPriority()`/`setPriority()`：可以使用这两种方法来获取或设置 Thread 对象的优先级
+- `isDaemon()`/`setDaemon()`：这两种方法允许获取或建立 Thread 对象的守护条件。
 - `getState()`：该方法返回Thread 对象的状态。
-- `interrupt()`/`interrupted()`/`isInterrupted()`：第一种方法表明你正在请求结束执行某个 Thread 对象。另外两种方法可用于检查中断状态。这些方法的主要区别在于，调用`interrupted()`方法时将清除中断标志的值， 而`isInterrupted()`方法不会。调用`interrupt()`方法不会结束 Thread 对象的执行。Thread 对象负责检查标志的状态并做出相应的响应。
-- `sleep()`：该方法允许你将线程的执行暂停一段时间。它将接收一个 long 型值作为参数，该值代表你想要 Thread 对象暂停执行的毫秒数。
+- `interrupt()`/`interrupted()`/`isInterrupted()`：第一种方法表明正在请求结束执行某个 Thread 对象。另外两种方法可用于检查中断状态。这些方法的主要区别在于，调用`interrupted()`方法时将清除中断标志的值， 而`isInterrupted()`方法不会。调用`interrupt()`方法不会结束 Thread 对象的执行。Thread 对象负责检查标志的状态并做出相应的响应。
+- `sleep()`：该方法允许将线程的执行暂停一段时间。它将接收一个 long 型值作为参数，该值代表想要 Thread 对象暂停执行的毫秒数。
 - `join()`：这个方法将暂停调用线程的执行，直到调用该方法的线程执行结束为止。可以使用该方法等待另一个 Thread 对象结束。
 - `setUncaughtExceptionHandler()`：当线程执行出现未校验异常时，该方法用于建立未校验异常的控制器。
 - `currentThread()`：这是Thread 类的静态方法，它返回实际执行该代码的 Thread 对象。
@@ -137,7 +137,7 @@ Thread类的其他常用方法。
 # Chapter03 管理大量线程：执行器
 
 
-## 执行器的基本特征
+## 3.1 执行器的基本特征
 
 - 不需要创建任何 Thread 对象。如果要执行一个并发任务，只需要创建一个执行该任务的实例并且将其发送给执行器。执行器会管理执行该任务的线程。
 - 执行器通过重新使用线程来缩减线程创建带来的开销。在内部，执行器管理着一个线程池，其中的线程称为工作线程（worker-thread）。如果向执行器发送任务而且存在某一空闲的工作线程，那么执行器就会使用该线程执行任务。
@@ -145,7 +145,7 @@ Thread类的其他常用方法。
 - 必须以显式方式结束执行器的执行，必须告诉执行器完成执行之后终止所创建的线程。如若不然，执行器则不会结束执行，这样应用程序也不会结束。
 
 
-## 执行器框架的基本组件
+## 3.2 执行器框架的基本组件
 
 - Executor 接口：仅定义了一个方法，即允许编程人员向执行器发送一个 Runnable 对象。
 - ExecutorService 接口：扩展了 Executor 接口并且包括更多方法，增加了该框架的功能。
@@ -156,7 +156,7 @@ Thread类的其他常用方法。
 - Executors 类：该类为创建 Executor 对象和其他相关类提供了实用方法。
 
 
-## 其他重要方法
+## 3.3 其他重要方法
 
 通常阻塞型数据结构也会实现具有非阻塞型行为的方法，而非阻塞型数据结构并不会实现阻塞型方法。
 
@@ -171,5 +171,61 @@ Thread类的其他常用方法。
 - `offer()`、`offerFirst()`、`offerLast()`：这些方法可以将一个元素插入数据结构。如果该结构已满，则返回一个 Boolean 值 false。
 - `poll()`、`pollFirst()`、`pollLast()`：这些方法将返回并且删除数据结构中的一个元素。如果该结构为空，则返回 null 值。
 - `peek()`、`peekFirst()`、`peekLast()`：这些方法返回但是并不删除数据结构中的一个元素。如果该数据结构为空，则返回 null 值。
+
+
+
+
+# Chapter04 充分利用执行器
+
+
+## 4.1 执行器的高级特性
+
+### 任务的撤销
+
+使用`submit()`方法将 Runnable 对象发送给执行器时，它会返回 Future 接口的一个实现。
+该类允许控制该任务的执行。该类有`cancel()`方法，可用于撤销任务的执行。
+该方法接收一个布尔值作为参数，如果接收到的参数为 true ，那么执行器执行该任务，否则执行该任务的线程会被中断。
+
+以下是想要撤销的任务无法被撤销的情形。
+- 任务已经被撤销。
+- 任务已经完成了执行。
+- 任务正在执行而提供给`cancel()`方法的参数为 false。
+- 在API文档中并未说明的其他原因
+
+`cancel()`方法返回了一个布尔值，用于表明当前任务是否被撤销。
+
+
+### 任务执行调度
+
+Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预定任务的执行，这就是 ScheduledThreadPoolExecutor 类。
+- 在某段延迟之后执行某项任务。
+- 周期性地执行某项任务，包括以固定速率执行任务或者以固定延迟执行任务。
+
+
+### 重载执行器方法
+
+可以通过扩展一个已有的类（ThreadPoolExecutor 或者 ScheduledThreadPoolExecutor）实现自己的执行器，获得想要的行为。
+这些类中包括一些便于改变执行器工作方式的方法。如果重载了 ThreadPoolExecutor 类，就可以重载以下方法。
+- `beforeExecute()`：该方法在执行器中的某一并发任务执行之前被调用。它接收将要执行的 Runnable 对象和将要执行这些对象的 Thread 对象。该方法接收的 Runnable 对象是 FutureTask 类的一个实例，而不是使用`submit()`方法发送给执行器的 Runnable 对象。
+- `afterExecute()`：该方法在执行器中的某一并发任务执行之后被调用。它接收的是已执行的 Runnable 对象和一个 Throwable 对象，该 Throwable 对象存储了任务中可能抛出的异常。与`beforeExecute()`方法相同，Runnable 对象是 FutureTask 类的一个实例。
+- `newTaskFor()`：该方法创建的任务将执行使用`submit()`方法发送的 Runnable 对象。该方法必须返回 RunnableFuture 接口的一个实现。默认情况下，Open JDK 9 和 Oracle JDK 9 返回 FutureTask 类的一个实例，但是这在今后的实现中可能会发生变化。如果扩展 ScheduledThreadPoolExecutor 类，可以重载`decorateTask()`方法。该方法与面向预定任务的`newTaskFor()`方法类似并且允许重载执行器所执行的任务。
+
+
+### 更改一些初始化参数
+
+可以在执行器创建之时更改一些参数以改变其行为。
+- BlockingQueue<Runnable>：每个执行器均使用一个内部的 BlockingQueue 存储等待执行的任务。可以将该接口的任何实现作为参数传递。例如，更改执行器执行任务的默认顺序。
+- ThreadFactory：可以指定 ThreadFactory 接口的一个实现，而且执行器将使用该工厂创建执行该任务的线程。例如，可以使用 ThreadFactory 接口创建 Thread 类的一个扩展类，保存有关任务执行时间的日志信息。
+- RejectedExecutionHandler：调用`shutdown()`方法或者`shutdownNow()`方法之后，所有发送给执行器的任务都将被拒绝。可以指定 RejectedExecutionHandler 接口的一个实现管理这种情形。
+
+
+
+
+
+
+
+
+
+
 
 

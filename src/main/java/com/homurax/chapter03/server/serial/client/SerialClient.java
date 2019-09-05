@@ -26,6 +26,8 @@ public class SerialClient implements Runnable {
         List<WDI> data = dao.getData();
         Random randomGenerator = new Random();
 
+        long start = System.currentTimeMillis();
+
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 9; j++) {
                 try (Socket echoSocket = new Socket("localhost", Constants.SERIAL_PORT);
@@ -73,6 +75,9 @@ public class SerialClient implements Runnable {
             }
         }
 
+        System.out.println("Total Time: "
+                + ((System.currentTimeMillis()- start) / 1000)
+                + " seconds.");
     }
 
 

@@ -32,7 +32,6 @@ public class WDILoader {
             e.printStackTrace();
         }
         return dataList;
-
     }
 
     private String[] parse(String line) {
