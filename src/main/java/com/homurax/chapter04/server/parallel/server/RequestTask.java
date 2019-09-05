@@ -37,7 +37,7 @@ public class RequestTask implements Runnable {
     public void run() {
 
         try {
-            while (!Thread.currentThread().interrupted()) {
+            while (!Thread.interrupted()) {
                 try {
                     Socket clientSocket = pendingConnections.take();
                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));

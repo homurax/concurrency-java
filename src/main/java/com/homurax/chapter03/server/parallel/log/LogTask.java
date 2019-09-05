@@ -7,7 +7,7 @@ public class LogTask implements Runnable {
     @Override
     public void run() {
         try {
-            while (Thread.currentThread().interrupted()) {
+            while (Thread.interrupted()) {
                 TimeUnit.SECONDS.sleep(10);
                 Logger.writeLogs();
             }

@@ -13,7 +13,7 @@ public class CleanCacheTask implements Runnable {
     @Override
     public void run() {
         try {
-            while (!Thread.currentThread().interrupted()) {
+            while (!Thread.interrupted()) {
                 TimeUnit.SECONDS.sleep(10);
                 cache.cleanCache();
             }
