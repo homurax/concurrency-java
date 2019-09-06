@@ -19,6 +19,7 @@ public class ConcurrentClient implements Runnable {
         this.executor = executor;
     }
 
+    @Override
     public void run() {
         WDIDAO dao = WDIDAO.getDAO();
         List<WDI> data = dao.getData();
