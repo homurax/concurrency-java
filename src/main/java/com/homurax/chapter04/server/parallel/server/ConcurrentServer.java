@@ -91,7 +91,7 @@ public class ConcurrentServer {
         System.out.println("Request task ok");
         System.out.println("Closing socket");
         System.out.println("Shutting down logger");
-        Logger.sendMessage("Shuttingdown the logger");
+        Logger.sendMessage("Shutting down the logger");
         Logger.shutdown();
         System.out.println("Logger ok");
         System.out.println("Main server thread ended");
