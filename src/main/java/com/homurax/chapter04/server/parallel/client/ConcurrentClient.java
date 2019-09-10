@@ -25,8 +25,6 @@ public class ConcurrentClient implements Runnable {
         List<WDI> data = dao.getData();
         Random randomGenerator = new Random();
 
-        long start = System.currentTimeMillis();
-
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 9; j++) {
                 QueryTask task = new QueryTask(data, username);
@@ -35,12 +33,6 @@ public class ConcurrentClient implements Runnable {
             ReportTask task = new ReportTask(data, username);
             executor.submit(task);
         }
-
-        long end = System.currentTimeMillis();
-        System.out.println("Total Time: "
-                + ((end - start) / 1000)
-                + " seconds.");
-
     }
 
 
