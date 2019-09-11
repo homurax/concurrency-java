@@ -1,31 +1,32 @@
-package com.homurax.chapter04.reader.rss.reader.basic;
+package com.homurax.chapter04.reader.rss.reader.advanced;
 
 import com.homurax.chapter04.reader.rss.buffer.NewsBuffer;
+import com.homurax.chapter04.reader.rss.reader.basic.NewsTask;
 import com.homurax.chapter04.reader.rss.writer.NewsWriter;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class NewsSystem implements Runnable {
+public class NewsAdvancedSystem implements Runnable {
 
     private String route;
 
-    private ScheduledThreadPoolExecutor executor;
+    private NewsExecutor executor;
 
     private NewsBuffer buffer;
 
     private CountDownLatch latch = new CountDownLatch(1);
 
-    public NewsSystem(String route) {
+    public NewsAdvancedSystem(String route) {
         this.route = route;
-        this.executor = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+        this.executor = new NewsExecutor(Runtime.getRuntime().availableProcessors());
         this.buffer = new NewsBuffer();
     }
 
@@ -47,7 +48,7 @@ public class NewsSystem implements Runnable {
                 String url = data[1];
                 NewsTask task = new NewsTask(name, url, buffer);
                 System.out.println("Task " + task.getName());
-                executor.scheduleWithFixedDelay(task, 0, 1, TimeUnit.MINUTES);
+                executor.scheduleWithFixedDelay(task, 0, 1, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,7 +56,7 @@ public class NewsSystem implements Runnable {
 
         synchronized (this) {
             try {
-                latch.await();
+                wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
