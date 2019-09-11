@@ -218,9 +218,12 @@ Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预�
 - ThreadFactory：可以指定 ThreadFactory 接口的一个实现，而且执行器将使用该工厂创建执行该任务的线程。例如，可以使用 ThreadFactory 接口创建 Thread 类的一个扩展类，保存有关任务执行时间的日志信息。
 - RejectedExecutionHandler：调用`shutdown()`方法或者`shutdownNow()`方法之后，所有发送给执行器的任务都将被拒绝。可以指定 RejectedExecutionHandler 接口的一个实现管理这种情形。
 
-
-
-
+### 有关执行器的其他信息
+- `shutdown()`：必须显式调用该方法以结束执行器的执行，也可以重载该方法，加入一些代码释放执行器所使用的额外资源。
+- `shutdownNow()`：`shutdown()`方法和`shutdownNow()`方法之间的区别在于`shutdown()`方法要等待执行器中所有处于等待状态的任务全部终结。
+- `submit()`、`invokeall()`或者`invokeany()`：可以调用这些方法向执行器发送并发任务。如果需要在将任务插入到执行器任务队列之前或之后进行一些操作，就可以重载这些方法。在任务进行排队之前或之后添加定制操作与在该任务执行之前或之后添加定制操作是不同的，这些操作要考虑到重载`beforeExecute()`方法和`afterExecute()`方法。
+- `schedule()`：该方法在给定延迟之后执行某个任务，且该任务仅执行一次。
+- `scheduleAtFixedRate()`：该方法按照给定周期执行一个周期性任务。它与`scheduleWithFixedDelay()`方法的区别在于，对于后者而言，两次执行之间的延迟是指第一次执行结束之后到第二次执行之前的时间；而对于前者而言，两次执行之间的延迟是指两次执行起始之间的时间。
 
 
 
