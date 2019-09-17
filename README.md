@@ -180,7 +180,7 @@ Thread类的其他常用方法。
 
 ## 4.1 执行器的高级特性
 
-### 任务的撤销
+### 4.1.1 任务的撤销
 
 使用`submit()`方法将 Runnable 对象发送给执行器时，它会返回 Future 接口的一个实现。
 该类允许控制该任务的执行。该类有`cancel()`方法，可用于撤销任务的执行。
@@ -195,14 +195,14 @@ Thread类的其他常用方法。
 `cancel()`方法返回了一个布尔值，用于表明当前任务是否被撤销。
 
 
-### 任务执行调度
+### 4.1.2 任务执行调度
 
 Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预定任务的执行，这就是 ScheduledThreadPoolExecutor 类。
 - 在某段延迟之后执行某项任务。
 - 周期性地执行某项任务，包括以固定速率执行任务或者以固定延迟执行任务。
 
 
-### 重载执行器方法
+### 4.1.3 重载执行器方法
 
 可以通过扩展一个已有的类（ThreadPoolExecutor 或者 ScheduledThreadPoolExecutor）实现自己的执行器，获得想要的行为。
 这些类中包括一些便于改变执行器工作方式的方法。如果重载了 ThreadPoolExecutor 类，就可以重载以下方法。
@@ -211,14 +211,14 @@ Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预�
 - `newTaskFor()`：该方法创建的任务将执行使用`submit()`方法发送的 Runnable 对象。该方法必须返回 RunnableFuture 接口的一个实现。默认情况下，Open JDK 9 和 Oracle JDK 9 返回 FutureTask 类的一个实例，但是这在今后的实现中可能会发生变化。如果扩展 ScheduledThreadPoolExecutor 类，可以重载`decorateTask()`方法。该方法与面向预定任务的`newTaskFor()`方法类似并且允许重载执行器所执行的任务。
 
 
-### 更改一些初始化参数
+### 4.1.4 更改一些初始化参数
 
 可以在执行器创建之时更改一些参数以改变其行为。
 - BlockingQueue<Runnable>：每个执行器均使用一个内部的 BlockingQueue 存储等待执行的任务。可以将该接口的任何实现作为参数传递。例如，更改执行器执行任务的默认顺序。
 - ThreadFactory：可以指定 ThreadFactory 接口的一个实现，而且执行器将使用该工厂创建执行该任务的线程。例如，可以使用 ThreadFactory 接口创建 Thread 类的一个扩展类，保存有关任务执行时间的日志信息。
 - RejectedExecutionHandler：调用`shutdown()`方法或者`shutdownNow()`方法之后，所有发送给执行器的任务都将被拒绝。可以指定 RejectedExecutionHandler 接口的一个实现管理这种情形。
 
-### 有关执行器的其他信息
+### 4.1.5 有关执行器的其他信息
 - `shutdown()`：必须显式调用该方法以结束执行器的执行，也可以重载该方法，加入一些代码释放执行器所使用的额外资源。
 - `shutdownNow()`：`shutdown()`方法和`shutdownNow()`方法之间的区别在于`shutdown()`方法要等待执行器中所有处于等待状态的任务全部终结。
 - `submit()`、`invokeall()`或者`invokeany()`：可以调用这些方法向执行器发送并发任务。如果需要在将任务插入到执行器任务队列之前或之后进行一些操作，就可以重载这些方法。在任务进行排队之前或之后添加定制操作与在该任务执行之前或之后添加定制操作是不同的，这些操作要考虑到重载`beforeExecute()`方法和`afterExecute()`方法。
@@ -227,6 +227,43 @@ Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预�
 
 
 
+# Chapter05 从任务获取数据：Callable 接口与 Future 接口
+
+
+## 5.1 Callable 接口和 Future 接口
+
+执行器框架允许执行并发任务而无须创建和管理线程。可以创建任务并将其发送给执行器，而执行器负责创建和管理所需的线程。
+- 基于`Runnable`接口的任务：这些任务实现了不返回任何结果的`run()`方法。
+- 基于`Callable`接口的任务：这些任务实现了返回某个对象作为结果的`call()`接口。`call()`方法返回的具体类型由`Callable`接口的泛型参数指定。为了获取该任务返回的结果，执行器会为每个任务返回一个`Future`接口的实现。
+
+
+### 5.1.1 Callable 接口
+
+主要特征如下。
+- 它是一个通用接口。它有一个简单类型参数，与`call()`方法的返回类型相对应。
+- 声明了`call()`方法。执行器运行任务时，该方法会被执行器执行。它必须返回声明中指定类型的对象。
+- `call()`方法可以抛出任何一种校验异常。可以实现自己的执行器并重载`afterExecute()`方法来处理这些异常。
+
+
+### 5.1.2 Future 接口
+
+向执行器发送一个 Callable 任务时，它将返回一个 Future 接口的实现，这允许控制任务的执行和任务状态，使你能够获取结果。该接口的主要特征如下。
+
+- 使用`cancel()`方法来撤销任务的执行。该方法有一个布尔型参数，用于指定是否需要在任务运行期间中断任务。
+- 校验任务是否已被撤销（采用`isCancelled()`方法）或者是否已经结束（采用`isDone()`方法）。
+- 你可以使用`get()`方法获取任务返回的值。当任务完成执行后，将返回任务所返回的值。如果任务并没有完成执行，它将挂起执行线程直到任务执行完毕。`get(long, TimeUnit)`方法带有两个参数：时间周期和该周期的 TimeUnit 。该方法区别在于将线程等待的时间周期作为参数来传递。如果这一周期结束后任务仍未结束执行，该方法就会抛出一个`TimeoutException`异常。
+
+
+## 5.2 其他相关方法
+
+关于 AbstractExecutorService 接口的方法。
+
+- `invokeAll (Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)`：当作为参数传递的 Callable 任务列表中的所有任务完成执行，或者执行时间超出了第二、第三个参数指定的时间范围时，该方法返回一个与该 Callable 任务列表相关联的 Future 对象列表。
+- `invokeAny (Collection<? Extends Callable<T>> tasks, long timeout, TimeUnit unit)`：当作为参数传递的 Callable 任务列表中的任务在超时（由第二和第三个参数指定的期限）之前完成其执行并且没有抛出异常时，该方法返回 Callable 任务列表中第一个任务的结果。如果超时，那么该方法抛出一个 TimeoutException 异常。
+
+关于 CompletionService 接口的方法。
+- `poll()`方法：用到了该方法带有两个参数的版本，不过该方法还有一个不带参数的版本。从内部数据结构来看，该版本检索并且删除自上一次调用`poll()`或`take()`方法以来下一个已完成任务的 Future 对象。如果没有任何任务完成，执行该方法将返回 null 值。
+- `take()`方法：该方法和前一个方法类似，只不过如果没有任何任务完成，它将休眠该线程，直到有一个任务执行完毕为止。
 
 
 
