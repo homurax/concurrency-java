@@ -19,7 +19,7 @@ public class MultipleConcurrentIndexing {
         int numCores = Runtime.getRuntime().availableProcessors();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.max(numCores - 1, 1));
         ExecutorCompletionService<List<Document>> completionService = new ExecutorCompletionService<>(executor);
-        ConcurrentHashMap<String, StringBuffer> invertedIndex = new ConcurrentHashMap<String, StringBuffer>();
+        ConcurrentHashMap<String, StringBuffer> invertedIndex = new ConcurrentHashMap<>();
         final int NUMBER_OF_DOCUMENTS = 5000;
 
 
