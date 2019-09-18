@@ -262,7 +262,7 @@ Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预�
 - `invokeAny (Collection<? Extends Callable<T>> tasks, long timeout, TimeUnit unit)`：当作为参数传递的 Callable 任务列表中的任务在超时（由第二和第三个参数指定的期限）之前完成其执行并且没有抛出异常时，该方法返回 Callable 任务列表中第一个任务的结果。如果超时，那么该方法抛出一个 TimeoutException 异常。
 
 关于 CompletionService 接口的方法。
-- `poll()`方法：用到了该方法带有两个参数的版本，不过该方法还有一个不带参数的版本。从内部数据结构来看，该版本检索并且删除自上一次调用`poll()`或`take()`方法以来下一个已完成任务的 Future 对象。如果没有任何任务完成，执行该方法将返回 null 值。
+- `poll()`方法：检索并且删除自上一次调用`poll()`或`take()`方法以来下一个已完成任务的 Future 对象。如果没有任何任务完成，执行该方法将返回 null 值。
 - `take()`方法：该方法和前一个方法类似，只不过如果没有任何任务完成，它将休眠该线程，直到有一个任务执行完毕为止。
 
 
