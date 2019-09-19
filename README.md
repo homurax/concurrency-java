@@ -312,10 +312,23 @@ Phaser 类提供了`arrive()`、 `arriveAndDeregister()`和`arriveAndAwaitAdvanc
 
 ### 6.1.3 其他功能
 
+在所有参与任务都完成了某个阶段的执行之后，在继续下一阶段之前，Phaser 类执行`onAdvance(int phase, int registeredParties)`方法。该方法接收如下两个参数。
+- phase：这是已执行完毕阶段的编号。第一个阶段的编号为0。
+- registeredParties：这个参数代表参与任务的数目。
 
+如果想在两个阶段之间执行一些代码，例如，对某些数据进行排序或者转换，那么可以扩展 Phaser 类并重载该方法以实现自己的分段器。
 
+分段器可以有以下两种状态。
+- 激活状态：创建了分段器且新的参与者注册后，分段器将进入激活状态，并持续这种状态，直到其终止。处于这种状态时，它接受新的参与者并像之前所述那样工作。
+- 终止状态：`onAdvance()`方法返回 true 值时，分段器进入这种状态。默认情况下，当所有参与者都注销后，`onAdvance()`方法将返回 true 值。
 
+分段器处于终止状态时，新参与者的注册无效，而且同步方法会立即返回。
 
-
+Phaser 类提供了一些方法，获取分段器状态和其中参与者的信息。
+- `getRegisteredParties()`：该方法返回分段器中参与者的数目。
+- `getPhase()`：该方法返回当前阶段的编号。
+- `getArrivedParties()`：该方法返回已经完成当前阶段的参与者的数目。
+- `getUnarrivedParties()`：该方法返回尚未完成当前阶段的参与者的数目。
+- `isTerminated()`：如果分段器处于终止状态，则该方法返回 true 值，否则返回 false 值。
 
 
