@@ -62,9 +62,9 @@
 - LinkedBlockingDeque：阻塞型的列表。
 - LinkedBlockingQueue：阻塞型的队列。
 - PriorityBlockingQueue：基于优先级对元素进行排序的阻塞型队列。
-- ConcurrentSkipListMap：非阻塞型的NavigableMap。
+- ConcurrentSkipListMap：非阻塞型的 NavigableMap。
 - ConcurrentHashMap：非阻塞型的哈希表。
-- AtomicBoolean、AtomicInteger、AtomicLong 和AtomicReference：基本Java数据类型的原子实现。
+- AtomicBoolean、AtomicInteger、AtomicLong 和 AtomicReference：基本Java数据类型的原子实现。
 
 ### 并发设计模式
 
@@ -333,5 +333,56 @@ Phaser 类提供了一些方法，获取分段器状态和其中参与者的信�
 - `getArrivedParties()`：该方法返回已经完成当前阶段的参与者的数目。
 - `getUnarrivedParties()`：该方法返回尚未完成当前阶段的参与者的数目。
 - `isTerminated()`：如果分段器处于终止状态，则该方法返回 true 值，否则返回 false 值。
+
+
+
+# Chapter07 优化分治解决方案：Fork/Join 框架
+
+Java 7 并发 API 通过 Fork/Join 框架引入了一种特殊的执行器。该框架的设计目的是针对那些可以使用分治设计范式来解决的问题，实现最优的并发解决方案。
+
+
+## 7.1 Fork/Join 框架简介
+
+框架基于 [ForkJoinPool](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html) 类，该类是一种特殊的执行器，具有`fork()`方法和`join()`方法两个操作（以及它们的不同重载），以及一个被称作**工作窃取**算法的内部算法。
+
+
+### 7.1.1 Fork/Join 框架的基本特征
+
+- `fork()`：该方法可以将一个子任务发送给 Fork/Join 执行器。
+- `join()`：该方法可以等待一个子任务执行结束后返回其结果。
+
+工作窃取算法确定要执行的任务。当一个任务使用`join()`方法等待某个子任务结束时，执行该任务的线程将会从任务池中选取另一个等待执行的任务并且开始执行。  
+通过这种方式，Fork/Join 执行器的线程总是通过改进应用程序的性能来执行任务。
+
+Java 8 在Fork/Join 框架中提供了一种新特性。现在，每个 Java 应用程序都有一个默认的 ForkJoinPool，称作公用池。
+可以通过调用静态方法`ForkJoinPool.commonPool()`获得这样的公用池，而不需要采用显式方法创建（尽管可以这样做）。
+这种默认的 Fork/Join 执行器会自动使用由计算机的可用处理器确定的线程数。
+可以通过更改系统属性值`java.util.concurrent.ForkJoinPool.common.parallelism`来修改这一默认行为。
+
+
+### 7.1.2 Fork/Join 框架的局限性
+
+- 不再进行细分的基本问题的规模既不能过大也不能过小。按照 Java API 文档的说明，该基本问题的规模应该介于100到10 000个基本计算步骤之间。
+- 数据可用前，不应使用阻塞型 I/O 操作，例如读取用户输入或者来自网络套接字的数据。这样的操作将导致 CPU 核资源空闲，降低并行处理等级，进而使性能无法达到最佳。
+- 不能在任务内部抛出校验异常，必须编写代码来处理异常（例如，陷入未经校验的 RuntimeException）。对于未校验异常有一种特殊的处理方式。
+
+
+### 7.1.3 Fork/Join 框架的组件
+
+Fork/Join 框架包括四个基本类。
+- [ForkJoinPool](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html) ：该类实现了 Executor 接口和 ExecutorService 接口，而执行 Fork/Join 任务时将用到 Executor 接口。Java 提供了一个默认的 ForkJoinPool 对象（公用池）。如果需要，还可以创建一些构造函数。可以指定并行处理的等级（运行并行线程的最大数目）。默认情况下，它将可用处理器的数目作为并发处理等级。
+- [ForkJoinTask](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinTask.html) ：这是所有 Fork/Join 任务的基本抽象类。该类是一个抽象类，提供了`fork()`方法和`join()`方法。该类还实现了 Future 接口，提供了一些方法来判断任务是否以正常方式结束，它是否被撤销，或者是否抛出了一个未校验异常。RecursiveTask 类、RecursiveAction 类和 CountedCompleter 类提供了`compute()`抽象方法。为了执行实际的计算任务，该方法应该在子类中实现。
+- [RecursiveTask](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveTask.html) ：该类扩展了 ForkJoinTask 类。RecursiveTask 也是一个抽象类，而且应该作为实现返回结果的 Fork/Join 任务的起点。
+- [RecursiveAction](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/RecursiveAction.html) ：该类扩展了 ForkJoinTask 类。RecursiveAction 类也是一个抽象类，而且应该作为实现不返回结果的 Fork/Join 任务的起点。
+- [CountedCompleter](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountedCompleter.html) ：该类扩展了 ForkJoinTask 类。该类应作为实现任务完成时触发另一任务的起点。
+
+
+
+
+
+
+
+
+
 
 
