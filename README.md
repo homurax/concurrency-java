@@ -44,6 +44,7 @@
 - [Class StampedLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/StampedLock.html)
 - [Class CountDownLatch](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountDownLatch.html)
 - [Class CyclicBarrier](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CyclicBarrier.html)
+- [Class Phaser](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Phaser.html)
 
 ### Fork/Join 框架
 
@@ -261,7 +262,8 @@ Java并发API为 ThreadPoolExecutor 类提供了一个扩展类，以支持预�
 - `invokeAll (Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)`：当作为参数传递的 Callable 任务列表中的所有任务完成执行，或者执行时间超出了第二、第三个参数指定的时间范围时，该方法返回一个与该 Callable 任务列表相关联的 Future 对象列表。
 - `invokeAny (Collection<? Extends Callable<T>> tasks, long timeout, TimeUnit unit)`：当作为参数传递的 Callable 任务列表中的任务在超时（由第二和第三个参数指定的期限）之前完成其执行并且没有抛出异常时，该方法返回 Callable 任务列表中第一个任务的结果。如果超时，那么该方法抛出一个 TimeoutException 异常。
 
-关于 CompletionService 接口的方法。
+关于 [CompletionService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionService.html) 接口的方法。
+已有的实现类 [ExecutorCompletionService](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorCompletionService.html)
 - `poll()`方法：检索并且删除自上一次调用`poll()`或`take()`方法以来下一个已完成任务的 Future 对象。如果没有任何任务完成，执行该方法将返回 null 值。
 - `take()`方法：该方法和前一个方法类似，只不过如果没有任何任务完成，它将休眠该线程，直到有一个任务执行完毕为止。
 
@@ -307,8 +309,9 @@ Phaser 类的主要特征有以下几点。
 Phaser 类提供了`arrive()`、 `arriveAndDeregister()`和`arriveAndAwaitAdvance()`三个方法通报任务已经完成当前阶段。  
 如果其中某个任务没有调用上述三个方法之一，那么分段器对其他参与任务的阻塞是不确定的。继续进入下一阶段需要用到下述方法。  
 - `arriveAndAwaitAdvance()`：任务使用该方法向分段器通报，表明它已经完成了当前阶段并且要继续下一阶段。分段器将阻塞该任务，直到所有参与的任务已调用其中一个同步方法。
+- `arrive()`：通知分段器当前阶段已经完成，但是不会等待剩下的任务（使用该方法时要非常小心）。
+- `arriveAndDeregister()`：告知分段器当前阶段已经完成，而且并不想在分段器中继续等待（通常是因为已经完成了任务）。
 - `awaitAdvance(int phase)`：任务使用该方法向分段器通报，如果该方法参数中的数值和分段器的实际阶段数相等，就要等待当前阶段结束；如果这两个数值不相等，则该方法立即返回。
-
 
 ### 6.1.3 其他功能
 
