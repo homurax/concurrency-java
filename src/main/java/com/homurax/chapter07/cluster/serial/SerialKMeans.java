@@ -29,6 +29,7 @@ public class SerialKMeans {
         return clusters;
     }
 
+    // 指派
     private static boolean assignment(DocumentCluster[] clusters, Document[] documents) {
 
         for (DocumentCluster cluster : clusters) {
@@ -41,8 +42,7 @@ public class SerialKMeans {
             double distance = Double.MAX_VALUE;
             DocumentCluster selectedCluster = null;
             for (DocumentCluster cluster : clusters) {
-                double curDistance = DistanceMeasurer.euclideanDistance(
-                        document.getData(), cluster.getCentroid());
+                double curDistance = DistanceMeasurer.euclideanDistance(document.getData(), cluster.getCentroid());
                 if (curDistance < distance) {
                     distance = curDistance;
                     selectedCluster = cluster;
@@ -58,6 +58,7 @@ public class SerialKMeans {
         return numChanges > 0;
     }
 
+    // 重新计算每个簇的质心
     private static void update(DocumentCluster[] clusters) {
         for (DocumentCluster cluster : clusters) {
             cluster.calculateCentroid();
