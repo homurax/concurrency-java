@@ -35,16 +35,20 @@ public class ConcurrentMain {
         int MAX_SIZE = Integer.valueOf(args[2]);
 
 
-        Date start, end;
-        start = new Date();
+        long start = System.currentTimeMillis();
         DocumentCluster[] clusters = ConcurrentKMeans.calculate(documents, K, vocIndex.size(), SEED, MAX_SIZE);
-        end = new Date();
+        long end = System.currentTimeMillis();
+
         System.out.println("K: " + K + "; SEED: " + SEED + "; MAX_SIZE: " + MAX_SIZE);
-        System.out.println("Execution Time: " + (end.getTime() - start.getTime()));
+        System.out.println("Execution Time: " + (end - start));
 
         System.out.println(
-                Arrays.stream(clusters).map(DocumentCluster::getDocumentCount).sorted(Comparator.reverseOrder())
-                        .map(Object::toString).collect(Collectors.joining(", ", "Cluster sizes: ", "")));
+                Arrays.stream(clusters)
+                        .map(DocumentCluster::getDocumentCount)
+                        .sorted(Comparator.reverseOrder())
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", ", "Cluster sizes: ", ""))
+        );
 
     }
 

@@ -27,6 +27,7 @@ public class AssignmentTask extends RecursiveAction {
                           int end,
                           AtomicInteger numChanges,
                           int maxSize) {
+
         this.clusters = clusters;
         this.documents = documents;
         this.start = start;
@@ -54,7 +55,6 @@ public class AssignmentTask extends RecursiveAction {
                 if (result) {
                     numChanges.incrementAndGet();
                 }
-
             }
         } else {
             int mid = (start + end) / 2;

@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 public class ConcurrentKMeans {
 
     public static DocumentCluster[] calculate(Document[] documents, int numberClusters, int vocSize, int seed, int maxSize) {
@@ -35,20 +34,16 @@ public class ConcurrentKMeans {
         return clusters;
     }
 
-    private static boolean assignment(DocumentCluster[] clusters, Document[] documents,
-                                      int maxSize, ForkJoinPool pool) {
+    private static boolean assignment(DocumentCluster[] clusters, Document[] documents, int maxSize, ForkJoinPool pool) {
 
         for (DocumentCluster cluster : clusters) {
             cluster.clearClusters();
         }
 
         AtomicInteger numChanges = new AtomicInteger(0);
-        AssignmentTask task = new AssignmentTask(clusters, documents, 0,
-                documents.length, numChanges, maxSize);
-
+        AssignmentTask task = new AssignmentTask(clusters, documents, 0, documents.length, numChanges, maxSize);
 
         pool.execute(task);
-
         task.join();
 
         System.out.println("Number of Changes: " + numChanges);
@@ -57,10 +52,9 @@ public class ConcurrentKMeans {
     }
 
     private static void update(DocumentCluster[] clusters, int maxSize, ForkJoinPool pool) {
+
         UpdateTask task = new UpdateTask(clusters, 0, clusters.length, maxSize);
-
         pool.execute(task);
-
         task.join();
     }
 
