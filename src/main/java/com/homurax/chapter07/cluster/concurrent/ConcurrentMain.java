@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,9 +29,9 @@ public class ConcurrentMain {
             System.err.println("Please specify K, SEED, MIN_SIZE");
             return;
         }
-        int K = Integer.valueOf(args[0]);
-        int SEED = Integer.valueOf(args[1]);
-        int MAX_SIZE = Integer.valueOf(args[2]);
+        int K = Integer.parseInt(args[0]);
+        int SEED = Integer.parseInt(args[1]);
+        int MAX_SIZE = Integer.parseInt(args[2]);
 
 
         long start = System.currentTimeMillis();
