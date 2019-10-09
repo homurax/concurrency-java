@@ -348,6 +348,34 @@ Java 7 并发 API 通过 Fork/Join 框架引入了一种特殊的执行器。该
 
 ### 7.1.1 Fork/Join 框架的基本特征
 
+Fork/Join 框架用于解决基于分治方法的问题。必须将原始问题划分为较小的问题，直到问题很小，可以直接解决。有了这个框架，待实现任务的主方法便如下所示：
+
+``` java
+if (problem.size() > DEFAULT_SIZE) {
+    divideTasks();
+    executeTask();
+    taskResults = joinTasksResult();
+    return taskResults;
+} else {
+    taskResults = solveBasicProblem();
+    return taskResults;
+}
+
+if (problem.size() > DEFAULT_SIZE) {
+    childTask1 = new Task();
+    childTask2 = new Task();
+    childTask1.fork();
+    childTask2.fork();
+    childTaskResults1 = childTask1.join();
+    childTaskResults2 = childTask2.join();
+    taskResults = makeResults(childTaskResults1, childTaskResults2);
+    return taskResults;
+} else {
+    taskResults = solveBasicProblem();
+    return taskResults;
+}
+```
+
 - `fork()`：该方法可以将一个子任务发送给 Fork/Join 执行器。
 - `join()`：该方法可以等待一个子任务执行结束后返回其结果。
 
@@ -377,12 +405,14 @@ Fork/Join 框架包括四个基本类。
 - [CountedCompleter](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CountedCompleter.html) ：该类扩展了 ForkJoinTask 类。该类应作为实现任务完成时触发另一任务的起点。
 
 
+## 7.2 Fork/Join 框架的其他方法
 
+使用 ForkJoinPool 类的`execute()`方法和`invoke()`方法将任务发送给池。还可以使用另一个名为`submit()`的方法。
 
+它们之间的主要区别在于：
+- `execute()`方法将任务发送给 ForkJoinPool 之后立即返回一个 void 值。
+- `invoke()`方法将任务发送给 ForkJoinPool 后，当任务完成执行后方可返回；
+- `submit()`方法将任务发送给 ForkJoinPool 之后立即返回一个 Future 对象，用以控制任务的状态并且获得其结果。
 
-
-
-
-
-
+ForkJoinTask 类为`invoke()`方法提供了一种替代方案，即`quietlyInvoke()`方法。这两种方法的主要区别在于，`invoke()`方法返回任务执行的结果或者在必要时抛出异常，而`quietlyInvoke()`方法不返回任务的结果，也不抛出任何异常。后者与示例中用到的`quietlyJoin()`方法相似。
 
