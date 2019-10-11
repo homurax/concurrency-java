@@ -57,13 +57,13 @@
 阻塞型数据结构：这些数据结构含有一些能够阻塞调用任务的方法，例如，当数据结构为空而又要从中获取值时。  
 非阻塞型数据结构：如果操作可以立即进行，它并不会阻塞调用任务。否则，它将返回null值或者抛出异常。  
 
-- ConcurrentLinkedDeque：非阻塞型的列表。
-- ConcurrentLinkedQueue：非阻塞型的队列。
-- LinkedBlockingDeque：阻塞型的列表。
-- LinkedBlockingQueue：阻塞型的队列。
-- PriorityBlockingQueue：基于优先级对元素进行排序的阻塞型队列。
-- ConcurrentSkipListMap：非阻塞型的 NavigableMap。
-- ConcurrentHashMap：非阻塞型的哈希表。
+- [ConcurrentLinkedDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedDeque.html)：非阻塞型的列表。
+- [ConcurrentLinkedQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedQueue.html)：非阻塞型的队列。
+- [LinkedBlockingDeque](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingDeque.html)：阻塞型的列表。
+- [LinkedBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/LinkedBlockingQueue.html)：阻塞型的队列。
+- [PriorityBlockingQueue](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/PriorityBlockingQueue.html)：基于优先级对元素进行排序的阻塞型队列。
+- [ConcurrentSkipListMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentSkipListMap.html)：非阻塞型的 NavigableMap。
+- [ConcurrentHashMap](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html)：非阻塞型的哈希表。
 - AtomicBoolean、AtomicInteger、AtomicLong 和 AtomicReference：基本Java数据类型的原子实现。
 
 ### 并发设计模式
@@ -361,6 +361,7 @@ if (problem.size() > DEFAULT_SIZE) {
     return taskResults;
 }
 
+//
 if (problem.size() > DEFAULT_SIZE) {
     childTask1 = new Task();
     childTask2 = new Task();
@@ -419,15 +420,68 @@ ForkJoinTask 类为`invoke()`方法提供了一种替代方案，即`quietlyInvo
 
 # Chapter08 使用并行流处理大规模数据集： MapReduce 模型
 
-**此章节主要介绍流的使用，比较熟悉的话可以不看。**
+**此章节主要介绍 Stream API 的使用，比较熟悉的话可以不看。**
 
-## 8.1 MapReduce 与 MapCollect
+[Interface BaseStream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/BaseStream.html)
+[Interface Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)
 
-MapReduce 是一种编程模型，用于在由大量以集群方式工作的机器构成的分布式环境中处理超大规模数据集。  
-它有两个步骤，通常通过以下两个方法实现。
-- Map：这一步对数据进行筛选和转换。
-- Reduce：这一步对数据应用汇总操作。
 
-为了在分布式环境中执行该操作，必须分割数据，然后将其分发到集群中的各台机器上。该编程模型在函数式编程领域已经使用很长时间了。Google 基于该原理设计了一种新的框架，而且在 Apache 基金会中，Hadoop 项目作为该模型的开源实现广受欢迎。
+# Chapter09 使用并行流处理大规模数据集： MapCollect 模型
 
-约简操作的主要思想是基于前面的中间结果和流元素创建一个新的中间结果。约简的替代方法（也称为可变约简）是将新的结果项整合到可变容器中（例如将其添加到ArrayList）。这种类型的约简通过`collect()`操作执行，因而称之为 MapCollect 模型。
+**此章节主要介绍如何处理流，更加关注`collect()`末端操作，比较熟悉的话可以不看。**
+
+[Interface Collector](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.html)
+[Class Collectors](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collectors.html)
+
+
+## 9.1 collect() 方法
+
+`collect()`方法可对流的元素进行转换和分组，生成一个含有流最终结果的新数据结构。可以使用多达三种不同的数据类型：一种输入数据类型，即来自流的输入元素的数据类型；一种中间数据类型，用于在`collect()`方法运行过程中存放元素；以及一种输出数据类型，它由`collect()`方法返回。
+
+
+``` java
+<R> R collect(Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
+```
+此方法用到了两种不同的数据类型：来自流的元素的输入数据类型，以及用于存放中间元素并返回最终结果的中间数据类型。
+
+- Supplier：这是一个创建中间数据类型对象的函数。如果使用顺序流，该方法会被调用一次。如果使用并行流，该方法会被调用多次，而且每次都必须产生一个新对象。
+- Accumulator：调用该函数可以处理输入元素，如果必要还可对该元素进行转换，并且将其存放在中间数据结构中。
+- Combiner：调用该函数可以将两个中间数据结构合二为一。该函数只有在处理并行流时才会被调用。
+
+此处 Combiner 是 BiConsumer，它必须将第二个中间结果合并到第一个中间结果中。
+
+
+
+``` java
+<R, A> R collect(Collector<? super T, A, R> collector);
+```
+此方法接收一个实现 Collector 接口的对象。你可以自己实现该接口，使用`Collector.of()`静态方法更容易。Java 在 Collector 工厂类中提供了一些预定义的收集器，也可以通过这些收集器的静态方法获得这些收集器。
+
+Collector 中定义了如下方法
+``` java
+Supplier<A> supplier();
+BiConsumer<A, T> accumulator();
+BinaryOperator<A> combiner();
+Function<A, R> finisher();
+Set<Characteristics> characteristics();
+```
+
+- Supplier：这是一个创建中间数据类型对象的函数。如果使用顺序流，该方法会被调用一次。如果使用并行流，该方法会被调用多次，而且每次都必须产生一个新对象。
+- Accumulator：调用该函数可以处理输入元素，如果必要还可对该元素进行转换，并且将其存放在中间数据结构中。
+- Combiner：调用该函数可以将两个中间数据结构合二为一。该函数只有在处理并行流时才会被调用。
+- Finisher：如果需要进行最终的转换或者计算，调用该函数可以将中间数据结构转换成最终的数据结构。
+- Characteristics：可以使用这个最后的变量参数表明所创建的收集器的一些特征。
+
+此处 Combiner 是 BinaryOperator，而且应该返回该 Combiner。因此既可以选择将第二个中间结果合并到第一个，也可以将第一个中间结果合并到第二个，或者也可以创建一个新的中间结果。
+
+
+Collector 中定义了枚举类 Characteristics，用于表示收集器属性的特性，可用于优化归约实现。
+- CONCURRENT：此收集器是并发的，这意味着结果容器可以支持与来自多个线程的同一结果容器并发调用的 accumulator 。
+- UNORDERED：此收集操作不保证保留输入元素的顺序。
+- IDENTITY_FINISH：表明 finisher 是标识功能，可以省略。
+
+若想要收集的最终结果和容器是一样的，比如收集的最终结果是集合，toList 收集器，就属于这种情况。  
+此时，finisher 方法不需要对容器做任何操作。更正式地说，此时的 finisher 方法其实是 identity 函数：它返回传入参数的值。如果这样，收集器就展现出**`IDENTITY_FINISH`**的特征，需要使用 characteristics 方法声明。
+
+
+
