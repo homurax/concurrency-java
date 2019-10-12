@@ -484,4 +484,61 @@ Collector 中定义了枚举类 Characteristics，用于表示收集器属性的
 此时，finisher 方法不需要对容器做任何操作。更正式地说，此时的 finisher 方法其实是 identity 函数：它返回传入参数的值。如果这样，收集器就展现出**`IDENTITY_FINISH`**的特征，需要使用 characteristics 方法声明。
 
 
+# Chapter10 异步流处理：反应流
 
+
+**反应流**为带有非阻塞回压（back pressure）的异步流处理定义了标准。这类系统最大的问题是资源消耗。快速的生产者会使较慢的消费者超负荷。这些组件之间的数据队列规模可能过度增加，从而影响整个系统的行为。回压机制确保了在生产者和消费者之间进行协调的队列含有限定数目的元素。反应流定义了描述必要操作和实体所需的接口、方法和协议的最小集合。它们基于以下三个要素。
+- 信息的发布者。
+- 一个或多个信息订阅者。
+- 发布者和消费者之间的订阅关系。
+
+反应流规范根据以下规则明确了这些类应该如何交互。
+- 发布者将添加那些希望得到通知的订阅者。
+- 订阅者被发布者添加时会收到通知。
+- 订阅者以异步方式请求来自发布者的一个或多个元素，也就是说，订阅者请求元素并继续其执行。
+- 发布者有一个要发布的元素时，会将其发送给请求元素的所有订阅者。
+
+如前所述，所有这些通信都是异步的，因此可以充分利用多核处理器的全部性能。
+Java 9 包含了三个接口，即 Flow.Publisher、Flow.Subscriber 和 Flow.Subscription，以及一个实用工具类，SubmissionPublisher 类。它们可支持实现反应流应用程序。
+
+[Class Flow](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.html)  
+[Class SubmissionPublisher<T>](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/SubmissionPublisher.html)
+
+
+## 10.1 Java 反应流简介
+
+[Interface Flow.Processor<T,R>](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.Processor.html)  
+[Interface Flow.Publisher<T>](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.Publisher.html)  
+[Interface Flow.Subscriber<T>](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.Subscriber.html)  
+[Interface Flow.Subscription](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.Subscription.html)
+
+- Flow.Publisher 接口：该接口描述了条目的生产者。
+- Flow.Subscriber 接口：该接口描述了条目的使用者（即消费者）。
+- Flow.Subscription 接口：该接口描述了生产者与消费者之间的连接。实现该接口的类可以管理生产者和消费者之间的条目交换。
+
+除了这三个接口之外，还有实现 Flow.Publisher 接口的 SubmissionPublisher 类。该类还用到了 Flow.Subscription 接口的一个实现。该类实现了 Flow.Publisher 接口的方法，进而可以支持消费者订阅，也可以将条目发送给这些消费者，因此我们只需要实现一个或多个实现 Flow.Subscriber 接口的类。
+
+
+### 10.1.1 Flow.Publisher 接口
+
+该接口描述了条目的生产者。它只提供一个方法。
+
+- `subscribe(Subscriber<? super T> subscriber)`：该方法接收 Flow.Subscriber 接口的一个实现作为参数，并且将该订阅者添加到其内部订阅者列表。该方法并不返回任何结果。从内部来看，它使用 Flow.Subscriber 接口提供的方法向订阅者发送条目、错误信息和订阅对象。
+
+### 10.1.2 Flow.Subscriber 接口
+
+该接口描述了条目的消费者。它提供了下述四个方法。
+
+- `onSubscribe(Subscription subscription)`：该方法由发布者调用，用于完成订阅者的订阅过程。它向订阅者发送了 Flow.Subscription 对象，该对象管理发布者和订阅者之间的通信。
+- `onNext(T item)`：当发布者想把新条目发送给订阅者时，会调用该方法。在该方法中，订阅者必须处理该条目。该方法并不返回任何结果。
+- `onError(Throwable throwable)`：如果出现了一个不可恢复的错误，而且没有调用其他的订阅者方法，那么发布者将调用该方法。该方法接收 Throwable 对象作为参数，其中含有已发生的错误。
+- `onComplete()`：不再发送任何条目时，发布者将调用该方法。该方法没有参数，也不返回结果。
+
+### 10.1.3 Flow.Subscription 接口
+
+该接口描述了发布者与订阅者之间的通信。它提供了两个方法，订阅者可以通过这些方法告诉发布者它们的通信将如何进行。
+
+- `cancel()`：订阅者调用该方法告诉发布者它不再需要任何条目了。
+- `request(long n)`：订阅者调用该方法来告诉发布者它需要更多的条目。它将订阅者想要的条目数作为参数。
+
+### 10.1.4 SubmissionPublisher 类
