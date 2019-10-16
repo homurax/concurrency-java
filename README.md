@@ -542,3 +542,20 @@ Java 9 包含了三个接口，即 Flow.Publisher、Flow.Subscriber 和 Flow.Sub
 - `request(long n)`：订阅者调用该方法来告诉发布者它需要更多的条目。它将订阅者想要的条目数作为参数。
 
 ### 10.1.4 SubmissionPublisher 类
+
+实现了 Flow.Publisher 接口，使用 Flow.Subscription 接口，并且提供向消费者发送条目的方法，这些方法用于了解消费者数量、发布者和消费者之间的订阅关系，以及关闭它们之间的通信。下面给出了该类比较重要的方法。
+- `subscribe()`：该方法由 Flow.Publisher 接口提供，用于向发布者订阅一个 Flow.Subscriber 对象。
+- `offer()`：该方法以异步方式调用其`onNext()`方法，向每个订阅者发布一个条目。
+- `submit()`：该方法以异步方式调用其`onNext()`方法，向每个订阅者发布一个条目。资源对任何订阅者都不可用时，进行不间断阻塞。
+- `estimateMaximumLag()`：该方法对发布者已生成但尚未被已订阅的订阅者使用的条目进行估计。
+- `estimateMinimumDemand()`：该方法对消费者已请求但是发布者尚未生成的条目数进行估计。
+- `getMaxBufferCapacity()`：该方法返回每个订阅者的最大缓冲区。
+- `getNumberOfSubscribers()`：该方法返回订阅者的数量。
+- `hasSubscribers()`：该方法返回一个布尔值，该值用于指示发布者是否有订阅者。
+- `close()`：该方法调用当前发布者的所有订阅者的onComplete()方法。
+- `isClosed()`：该方法返回一个布尔值，用于指示当前发布者是否已关闭。
+
+
+
+
+
