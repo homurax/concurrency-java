@@ -687,6 +687,112 @@ Java 并发 API 为之前描述的接口提供了多种实现，其中一些实�
     - ` reduce()`、`reduceEntries()`、`reduceKeys()`和`reduceValues()`：这些方法允许应用一个`reduce()`操作转换(键，值)对、键，或者将其整个哈希表作为流处理。
 
 
+### 11.1.3 使用新特性
+
+1. ConcurrentHashMap  
+
+**forEach()方法**  
+该方法允许你指定对 ConcurrentHashMap 的每个(键，值)对都要执行的函数。该方法有很多版本，但是最基本的版本只有一个可以以 lambda 表达式表示的 BiConsumer 函数。
+- `forEach(parallelismThreshold, action)`：这是要在并发应用程序中使用的版本。如果 map 的元素多于第一个参数指定的数目，该方法将以并行方式执行。
+- `forEachEntry(parallelismThreshold, action)`：该版本与上一版本相似，只不过在该版本中 Action 是 Consumer 接口的一个实现，它接收一个 Map.Entry 对象作为参数，其中含有元素的键和值。这种情况下也可以使用一个 lambda 表达式。
+- `forEachKey(parallelismThreshold, action)`：该版本与前一版本相似，只不过在这种情况下 Action 仅应用于 ConcurrentHashMap 的键。
+- `forEachValue(parallelismThreshold, action)`：该版本与前一版本相似，只不过在这种情况下 Action 仅应用于 ConcurrentHashMap 的值。
+
+
+**search()方法**  
+该方法对 ConcurrentHashMap 的所有元素均应用一个搜索函数。该搜索函数可以返回一个空值或者一个不同于 null 的值。`search()`方法将返回搜索函数所返回的第一个非空值。该方法接收两个参数。
+数。
+- parallelismThreshold：如果 map 的元素比该参数指定的数目多，该方法将以并行方式执行。
+- searchFunction：这是 BiFunction 接口的一个实现，可以表示为一个 lambda 表达式。该函数接收每个元素的键和值作为参数，而且如前所述，如果找到了要找的结果，该函数就必须返回一个非空值，否则返回一个空值。
+
+该方法的其他版本还有如下几种。
+- `searchEntries(parallelismThreshold, searchFunction)`：在这种情况下，搜索函数是 Function 接口的一个实现，接收一个 Map.Entry 对象作为参数。
+- `searchKeys(parallelismThreshold, searchFunction)`：在这种情况下，搜索函数仅应用于 ConcurrentHashMap 的键。
+- `searchValues(parallelismThreshold, searchFunction)`：在这种情况下，搜索函数仅应用于 ConcurrentHashMap 的值。
+
+
+**reduce()方法**  
+该方法和 Stream 框架提供的`reduce()`方法相似，但是在这种情况下，将直接对 ConcurrentHashMap 的元素进行操作。该方法接收以下三个参数。
+- parallelismThreshold：如果 ConcurrentHashMap 的元素数多于该参数所指定的数目，该方法将以并行方式执行。
+- transformer：该参数是 BiFunction 接口的一个实现，可以表示为一个 lambda 函数。它接收一个键和一个值作为参数，并且返回这些元素的转换结果。
+- reducer：该参数是 BiFunction 接口的一个实现，也可以表示为一个 lambda 函数。它接收由转换器函数返回的两个对象作为参数。该函数的目标是将这两个对象组合成一个对象。
+    
+还有其他一些版本的`reduce()`方法。
+- `reduceEntries()`、`reduceEntriesToDouble()`、`reduceEntriesToInt()`和`reduceEntriesToLong()`：对于这些情况，转换器函数和约简器函数都针对 Map.Entry 对象进行处理。后三个版本的方法分别返回一个 double、一个 int 和一个 long 值。
+- `reduceKeys()`、`reduceKeysToDouble()`、`reduceKeysToInt()`和`reduceKeysToLong()`：对于这些情况，转换器函数和约简器函数都针对 map 的键进行处理。后三个版本的方法分别返回一个 double、一个 int 和一个 long 值。
+- `reduceValues()`、`reduceValuesToDouble()`、`reduceValuesToInt()`和`reduceValuesToLong()`：对于这些情况，转换器函数和约简器函数都针对 map 的值进行处理。后三个版本的方法分别返回一个 double、一个 int 和一个 long 值。
+- `reduceToInt()`、`reduceToDouble()`和`reduceToLong()`：对于这些情况，转换器函数针对键和值进行处理，而约简器方法分别针对 int、double 和 long 数值进行处理。这些方法分别返回一个 int、一个 double 和一个 long 值。
+
+**compute()方法**  
+- compute(key, remappingFunction)：通过元素的 key 去获取值。通过函数 remappingFunction 使用 key 和 oldValue 计算新值。新值不为空则插入，为空时如果 key 存在则移除 key。最后返回值。
+- computeIfAbsent(key, mappingFunction)：通过元素的 key 去获取值。如果值为空，则通过函数 mappingFunction 计算新值，新值不为空则插入 map 中。最后返回值。
+- computeIfPresent(key, remappingFunction)：通过元素的 key 去获取值。如果值不为空，则通过函数 remappingFunction 使用 key 和 oldValue 计算新值。新值不为空则插入，为空则移除 key。最后返回值。
+
+**merge()方法**
+它可以将一个(键，值)对合并到 map。如果 ConcurrentHashMap 中不存在该键，则直接插入该键。如果 ConcurrentHashMap 中存在该键，则需要定义新旧两个键中究竟哪一个应该与新值相关联。该方法接收三个参数。
+- 要合并的键。
+- 要合并的值。
+- 可表示为一个 lambda 表达式的 BiFunction 的实现。该函数接收与该键相关的旧值和新值作为参数。该方法将该函数返回的值与该键关联。BiFunction 执行时对 map 进行部分锁定，这样可以保证同一个键不会被并发执行。
+
+
+2. ConcurrentLinkedDeque
+
+**removeIf()方法**  
+该方法在 Collection 接口中有一个默认实现，它是非并发的而且并没有被 ConcurrentLinkedDeque 类重载。该方法接收一个 Predicate 接口的实现作为参数，这样就会接收 Collection 中的一个元素作为参数，而且应该返回一个 true 或 false 值。该方法将处理 Collection 中的所有元素，而且当谓词取值为 true 时将删除这些元素。
+
+**spliterator()方法**  
+该方法返回 Spliterator 接口的一个实现。一个 spliterator 定义了可被 Stream API 使用的数据源。需要直接使用 spliterator 的情况很少，但是有时可能希望创建自己的 spliterator 来为流产生一个定制的源（例如，如果实现了自己的数据结构）。如果有自己的 spliterator 实现，可以使用`StreamSupport.stream(mySpliterator, isParallel)`在其之上创建一个流。其中，isParallel 是一个布尔值，决定了要创建的流是否为并行流。spliterator 在某种意义上很像迭代器，可用来遍历集合中的所有元素，但你可以对元素进行划分，从而以并发的方式进行遍历操作。
+
+一个 spliterator 具有8 个定义其行为的不同特征。
+- CONCURRENT：可以安全地以并发方式对 spliterator 源进行修改。
+- DISTINCT：spliterator 所返回的所有元素均不相同。
+- IMMUTABLE：spliterator 源无法被修改。
+- NONNULL：spliterator 不返回 null 值。
+- ORDERED：spliterator 所返回的元素是经过排序的（这意味着它们的顺序很重要）。
+- SIZED：spliterator 可以使用`estimateSize()`方法返回确定数目的元素。
+- SORTED：spliterator 源经过了排序。
+- SUBSIZED：如果使用`trySplit()`方法分割该 spliterator，产生的 spliterator 将是 SIZED 和 SUBSIZED 的。
+
+该接口最有用的方法是如下几种。
+- `estimatedSize()`：该方法将返回 spliterator 中元素数的估计值。
+- `forEachRemaining()`：该方法允许你将一个 Consumer 接口的实现应用到 spliterator 尚未进行处理的元素。
+- `tryAdvance()`：该方法接收一个Consumer 接口的实现作为参数。它选取 spliterator 中的下一个元素，使用 Consumer 实现进行处理并返回 true 值。如果spliterator 再没有要处理的元素，则它返回 false 值。
+- `trySplit()`：该方法尝试将 spliterator 分割成两个部分。作为调用方的 spliterator 将处理其中的一些元素，而返回的 spliterator 将处理另一些元素。如果该 spliterator 是 ORDERED，则返回的 spliterator 必须按照严格排序处理元素，而且调用方也必须按该严格排序处理。
+- `hasCharacteristics()`：该方法允许你检查 spliterator 的属性。
+
+### 11.1.4 原子变量
+
+原子变量是在 Java 1.5 中引入的，用于提供针对 integer、long、boolean、reference 和 Array对象的原子操作。  
+它们提供了一些方法来递增值、递减值、确定值、返回值，或者在其当前值等于预定义值时确定值。原子变量提供了与 volatile 关键字相似的保障。
+
+Java 8 中增加了四个新类，即 [DoubleAccumulator](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/DoubleAccumulator.html)、[DoubleAdder](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/DoubleAdder.html)、[LongAccumulator](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAccumulator.html) 和 [LongAdder](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/LongAdder.html)。  
+LongAdder 提供了与 AtomicLong 相似的功能，但是当经常更新来自不同线程的累加操作并且只需要在操作的末端给出结果时，该类具有更好的性能。  
+这两个类的主要目标都是为了给出一个不同的线程可以以一致的方式对其更新的计数器。这些类当中最重要的方法包括如下几种。
+- `add()`：为计数器增加参数中指定的值。
+- `increment()`：相当于add(1)。
+- `decrement()`：相当于add(-1)。
+- `sum()`：该方法返回计数器的当前值。
+注意，DoubleAdder 类并没有`increment()`和`decrement()`方法。
+
+LongAccumulator 类和 LongAdder 类很类似，但是它们也有一个非常明显的区别。它们都有一个可以指定如下两个参数的构造函数。
+- 内部计数器的标识值。
+- 一个将新值累加到累加器的函数。
+
+要注意的是，该函数并不依赖于累加的顺序。在这种情况下，最重要的方法就是如下两种。
+- `accumulate()`：该方法接收一个 long 值作为参数。它应用函数对计数器进行递增或递减操作，使之成为当前值和参数指定值。
+- `get()`：返回计数器的当前值。
+在累加器中使用交换运算，这样对于任意输入顺序，其输出结果均相同。
+
+
+
+
+
+
+
+
+
+
+
 
 
 
