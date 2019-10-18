@@ -832,5 +832,51 @@ Java 也提供了一些同步机制。
 
 在Java 中，信号量在 [Semaphore](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Semaphore.html) 类中实现。`wait()`方法被称作`acquire()`，而`signal()`方法被称作`release()`。
 
+### 11.2.3 CountDownLatch 类
+
+该类提供了一种等待一个或多个并发任务完成的机制。它有一个内部计数器，必须使用要等待的任务数初始化。然后，`await()`方法休眠调用线程，直到内部计数器为0，并且使用`countDown()`方法对该内部计数器做递减操作。
+
+### 11.2.4 CyclicBarrier 类
+
+该类允许将一些任务同步到某个共同点。所有的任务都在该点等待，直到任务全部到达该点为止。从内部来看，该类还管理了一个内部计数器，用于记录尚未到达该点的任务。当一个任务到达指定点时，它要执行`await()`方法以等待其他任务。当所有任务都到达时，CyclicBarrier 对象将它们唤醒，这样就能够继续执行。
+
+当所有的参与方都到达后，该类允许执行另一个任务。为了实现这一点，要在该对象的构造函数中指定一个 Runnable 对象。
+
+### 11.2.5 CompletableFuture 类
+
+这是在 Java 8 并发 API 中引入的一种同步机制，在 Java 9 中又有了一些新方法。它扩展了 Future 机制，为其赋予了更强的功能和更大的灵活性。它允许实现一个事件驱动的模型，链接那些只有当其他任务执行完毕后才执行的任务。
+
+与 Future 接口相同，CompletableFuture 也必须采用操作要返回的结果类型进行参数化。  
+和 Future 对象一样，CompletableFuture 类表示的是异步计算的结果，只不过 CompletableFuture 的结果可以由任意线程确立。  
+当计算正常结束时，该类采用`complete()`方法确定结果，而当计算出现异常时，则采用`completeExceptionally()`方法。  
+如果两个或者多个线程调用同一 CompletableFuture 的`complete()`方法或`completeExceptionally()`方法，那么只有第一个调用会起作用。  
+
+
+首先，可以使用构造函数创建 CompletableFuture 对象。在本例中，需要使用前面介绍的`complete()`方法确定任务结果。  
+不过，也可以使用`runAsync()`方法或者`supplyAsync()`创建一个任务结果。  
+`runAsync()`方法执行一个 Runnable 对象并且返回 CompletableFuture<Void>，这样计算就不能再返回任何结果了。  
+`supplyAsync()`方法执行了 Supplier 接口的一个实现，它采用本次计算要返回的类型进行参数化。  
+该 Supplier 接口提供了`get()`方法。在该方法中，需要包含任务代码并且返回任务生成的结果。  
+在本例中，CompletableFuture 的结果将作为 Supplier 接口的结果。  
+该类提供了大量方法，允许通过实现一个事件驱动的模型组织任务的执行顺序，一个任务只有在其之前的任务完成之后才会开始。这其中包括如下方法。
+
+
+- `thenApplyAsync()`：该方法接收 Function 接口的一个实现作为参数。该函数将在调用 CompletableFuture 完成后执行。该方法将返回 CompletableFuture 以获得 Function 的结果。
+- `thenComposeAsync()`：该方法和`thenApplyAsync()`方法相似，但是当供给函数也返回 CompletableFuture 时很有用。
+- `thenAcceptAsync()`：该方法和前一个方法相似，只不过其参数是 Consumer 接口的一个实现；在这种情况下，计算不会返回结果。
+- `thenRunAsync()`：该方法和前一个等价，只不过在这种情况下接收一个 Runnable 对象作为参数。
+- `thenCombineAsync()`：该方法接收两个参数。第一个参数为另一个 CompletableFuture 实例，另一个参数是 BiFunction 接口的一个实现。该 BiFunction 接口实现将在两个 CompletableFuture（当前调用的和参数中的）都完成后执行。该方法将返回 CompletableFuture 以获取 BiFunction 的结果。
+- `runAfterBothAsync()`：该方法接收两个参数。第一个参数为另一个 CompletableFuture，而第二个参数为 Runnable 接口的一个实现，它将在两个CompletableFuture（当前调用的和参数中的）都完成后执行。
+- `runAfterEitherAsync()`：该方法与前一个方法等价，只不过当其中一个 CompletableFuture 对象完成之后才会执行 Runnable 任务。
+- `allOf()`：该方法接收 CompletableFuture 对象的一个变量列表作为参数。它将返回一个 CompletableFuture<Void> 对象，而该对象将在所有的 CompletableFuture 对象都完成之后返回其结果。
+- `anyOf()`：该方法和前一个方法等价，只是返回的 CompletableFuture 对象会在其中一个 CompletableFuture 对象完成之后返回其结果。
+
+
+最后，如果想要获取 CompletableFuture 返回的结果，可以使用`get()`方法或者`join()`方法。  
+这两个方法都会阻塞调用线程，直到 CompletableFuture 完成之后返回其结果。  
+这两个方法之间的主要区别在于，`get()`方法抛出 ExecutionException（这是一个校验异常），而`join()`方法抛出 RuntimeException（这是一个未校验异常）。  
+因此，在不抛出异常的 lambda（例如Supplier、Consumer 或 Runnable）内部，使用`join()`方法更为方便。
+
+
 
 
