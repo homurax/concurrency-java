@@ -878,5 +878,17 @@ Java 也提供了一些同步机制。
 因此，在不抛出异常的 lambda（例如Supplier、Consumer 或 Runnable）内部，使用`join()`方法更为方便。
 
 
+前面提到的大多数方法都有 Async 后缀。这意味着这些方法将使用 ForkJoinPool.commonPool 实例以并发方式执行。  
+这些方法都有不带 Async 后缀的版本，它们将以串行方式执行（这就是说， 与执行 CompletableFuture 的线程是同一个）；
+还有带 Async 后缀并且以一个执行器实例作为额外参数的版本。  
+这种情况下，CompletableFuture 将在作为参数传递的执行器中以异步方式执行。 
+
+Java 9增加了一些方法，为 CompletableFuture 类赋予了更强的功能。 
+- `defaultExecutor()`：该方法用于返回并不接收 Executor 作为参数的那些异步操作的默认执行器。通常，它将是 ForkJoinPool.commonPool() 方法的返回值。
+- `copy()`：该方法创建 CompletableFuture 对象的一个副本。如果原来的 CompletableFuture 正常完成，则副本方法也将正常完成并返回相同的值。如果原来的 CompletableFuture 异常完成，则副本方法也异常完成，并且抛出 CompletionException 异常。
+- `completeAsync()`：该方法接收一个 Supplier 对象作为参数（还可以选择 Executor）。 借助 Supplier 的结果完成 CompletableFuture。
+- `orTimeout()`：该方法接收一段时延（一段时间和一个 TimeUnit）。如果 CompletableFuture 在这段时间之后没有完成，那么抛出 TimeoutException 异常并异常完成。
+- `completeOnTimeout()`：该方法与上一个方法相似，只不过它在作为参数的值的范围内正常完成。
+- `delayedExecutor()`：该方法返回一个 Executor，该执行器在执行指定时延之后执行某一任务。 
 
 

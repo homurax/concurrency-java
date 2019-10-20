@@ -23,15 +23,17 @@ public class CompletableMain {
 
         LoadTask loadTask = new LoadTask(file);
 
+        // 读取
         CompletableFuture<List<Product>> loadFuture = CompletableFuture
 				.supplyAsync(loadTask, CompletableFuture.delayedExecutor(3, TimeUnit.SECONDS));
 
         System.out.println(LocalDateTime.now() + ": Main: Then apply for search....");
 
+        // 读取 -> 查找
         CompletableFuture<List<Product>> completableSearch = loadFuture.thenApplyAsync(new SearchTask("love"));
-
+        // 读取 -> 查找 -> 写入
         CompletableFuture<Void> completableWrite = completableSearch.thenAcceptAsync(new WriteTask());
-
+        // 处理异常
         completableWrite.exceptionally(ex -> {
             System.out.println(LocalDateTime.now() + ": Main: Exception " + ex.getMessage());
             return null;
@@ -39,32 +41,26 @@ public class CompletableMain {
 
         System.out.println(LocalDateTime.now() + ": Main: Then apply for users....");
 
+        // 读取 -> 获取用户
         CompletableFuture<List<String>> completableUsers = loadFuture
                 .thenApplyAsync(resultList -> {
-
                     System.out.println(LocalDateTime.now() + ": Main: Completable users: start");
-
                     List<String> users = resultList.stream()
                             .flatMap(p -> p.getReviews().stream())
                             .map(Review::getUser)
                             .distinct()
                             .collect(Collectors.toList());
-
                     System.out.println(LocalDateTime.now() + ": Main: Completable users: end");
                     return users;
-
                 });
 
         System.out.println(LocalDateTime.now() + ": Main: Then apply for best rated product....");
-
+        // 读取 -> 查找评价最高
         CompletableFuture<Product> completableProduct = loadFuture
                 .thenApplyAsync(resultList -> {
-
                     Product maxProduct = null;
                     double maxScore = 0.0;
-
                     System.out.println(LocalDateTime.now() + ": Main: Completable product: start");
-
                     for (Product product : resultList) {
                         if (!product.getReviews().isEmpty()) {
                             double score = product.getReviews().stream().mapToDouble(Review::getValue).average().getAsDouble();
@@ -74,34 +70,32 @@ public class CompletableMain {
                             }
                         }
                     }
-
                     System.out.println(LocalDateTime.now() + ": Main: Completable product: end");
                     return maxProduct;
                 });
 
 
         System.out.println(LocalDateTime.now() + ": Main: Then apply for best selling product....");
+        // 读取 -> 查找销量最高
         CompletableFuture<Product> completableBestSellingProduct = loadFuture
                 .thenApplyAsync(resultList -> {
                     System.out.println(LocalDateTime.now() + ": Main: Completable best selling: start");
-
                     Product bestProduct = resultList.stream().min(Comparator.comparingLong(Product::getSalesRank)).orElse(null);
-
                     System.out.println(LocalDateTime.now() + ": Main: Completable best selling: end");
                     return bestProduct;
 
                 });
 
+        // 将前两个任务的结果连到一起 指定一个将在这两个任务完成之后执行的任务
         CompletableFuture<String> completableProductResult = completableBestSellingProduct
                 .thenCombineAsync(
                         completableProduct,
                         (bestSellingProduct, bestRatedProduct) -> {
                             System.out.println(LocalDateTime.now() + ": Main: Completable product result: start");
-
-                            String ret = "The best selling product is " + bestSellingProduct.getTitle() + "\n";
-
-                            ret += "The best rated product is " + bestRatedProduct.getTitle();
-
+                            String ret = "The best selling product is "
+                                    + bestSellingProduct.getTitle() + "\n"
+                                    + "The best rated product is "
+                                    + bestRatedProduct.getTitle();
                             System.out.println(LocalDateTime.now() + ": Main: Completable product result: end");
                             return ret;
                         });
