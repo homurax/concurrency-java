@@ -943,8 +943,34 @@ ReentrantLock 类还有一些方法可以帮助你获知 Lock 对象的状态。
 - `isTerminated()`：如果调用了`shutdown()`或`shutdownNow()`方法并且执行器已完成了所有未完成任务的执行，则该方法返回 true，否则返回 false。
 - `isTerminating()`：如果调用了`shutdown()`或`shutdownNow()`方法，但是执行器仍然在执行任务，则该方法返回 true。
 
+### 12.1.4 监视 Fork/Join 框架
 
+**Fork/Join** 框架提供了一种特殊的执行器，主要针对那些可以使用分治方法实现的算法。
+它基于工作窃取算法。创建一个用于处理整个问题的初始任务，该任务再创建其他子任务，每个子任务都处理问题的一部分（相对较小），并且等待任务执行完毕。
+分割后的每个任务都将它要处理的子问题的规模和预定义规模相比较，如果子问题的规模小于预定义规模，则直接求解该问题；
+否则，它将问题再次分割给其子任务处理，并且等待这些子任务返回结果。
+工作窃取算法利用了那些执行任务的线程，它们等待子任务返回结果并执行其他任务。ForkJoinPool 类提供了如下方法以获取其状态。
+- `getParallelism()`：该方法返回线程池确立的并行处理的预期层级。
+- `getPoolSize()`：该方法返回线程池中的线程数。
+- `getActiveThreadCount()`：该方法返回线程池中当前执行任务的线程数。
+- `getRunningThreadCount()`：该方法返回并不等待其子任务完成的线程的数量。
+- `getQueuedSubmissionCount()`：该方法返回已经提交给线程池但是尚未开始执行的任务数。
+- `getQueuedTaskCount()`：该方法返回线程池工作窃取队列中的任务数。
+- `hasQueuedSubmissions()`：如果有任务提交给线程池且尚未开始执行，则该方法返回 true，否则返回 false。
+- `getStealCount()`：该方法返回 Fork/Join 池执行工作窃取算法的次数。
+- `isTerminated()`：如果 Fork/Join 池完成执行，则该方法返回 true，否则返回 false。
 
+### 12.1.5 监视 Phaser
 
+Phaser 是一种同步机制，允许执行可划分为多个阶段的任务。该类也包含一些用于获取 Phaser 状态的方法。
+- `getArrivedParties()`：该方法返回已经完成当前阶段的已注册参与方的数量。
+- `getUnarrivedParties()`：该方法返回尚未完成当前阶段的已注册参与方的数量。
+- `getPhase()`：该方法返回当前阶段的编号。第一个阶段的编号为 0。
+- `getRegisteredParties()`：该方法返回 Phaser 中已注册参与方的数量。
+- `isTerminated()`：该方法返回一个布尔值，用于指示 Phaser 是否已经完成执行。
+
+### 12.1.6 监视流 API
+
+- `peek()`：可以置于多个方法的流水线处理之中，用以输出与在流中执行的操作或变换相关的日志信息。
 
 

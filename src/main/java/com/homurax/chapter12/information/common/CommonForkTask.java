@@ -29,7 +29,7 @@ public class CommonForkTask extends RecursiveAction {
             task2.join();
         } else {
             long duration = (long) (Math.random() * 10);
-            System.out.printf("%s-%s: Working %d seconds\n", LocalDateTime.now(), Thread.currentThread().getName(), duration);
+            System.out.printf("%s - %s: Working %d seconds\n", LocalDateTime.now(), Thread.currentThread().getName(), duration);
             try {
                 TimeUnit.SECONDS.sleep(duration);
             } catch (InterruptedException e) {
