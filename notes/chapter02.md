@@ -102,15 +102,13 @@ MatrixGenerator 中的 `generate()` 方法用于生成矩阵。
 
 SerialMultiplier  实现了该算法的串行版本。
 
-SerialMain 用于测试。
-
 ### 并行版本
 
 三种粒度实现。
 
 - 结果矩阵中每个元素对应一个线程。
 - 结果矩阵中每行对应一个线程。
-- 采用与可用处理器数或核心数相同的线程
+- 采用与可用处理器数或核心数相同的线程数。
 
 #### 每个元素一个线程
 
@@ -118,15 +116,11 @@ IndividualMultiplierTask 实现 Runnable 接口。
 
 ParallelIndividualMultiplier 创建所有必要的执行线程计算结果矩阵。因为如果同时启动所有线程，可能会使系统超载，所以将以 10 个线程一组的形式启动线程。启动 10 个线程后，使用 `join()` 方法等待它们完成，而且一旦完成，就启动另外 10 个线程，直到启动所有必需线程。
 
-ParallelIndividualMain 用于测试。
-
 #### 每行一个线程
 
 RowMultiplierTask 实现 Runnable 接口。
 
 ParallelRowMultiplier 类创建计算结果矩阵所需的所有执行线程。
-
-ParallelRowMain 用于测试。
 
 #### 线程的数量由处理器决定
 
@@ -136,8 +130,6 @@ GroupMultiplierTask 实现 Runnable 接口。
 
 ParallelGroupMutiplier 创建线程计算结果矩阵。
 
-ParallelGroupMain 用于测试。
-
 ### ★ 小节
 
 自定义 Task 类实现 Runnable 接口，`run()` 方法中编写核心计算逻辑。
@@ -145,3 +137,37 @@ ParallelGroupMain 用于测试。
 循环生成 Task 实例，创建 Thread 并调用 `start()` 方法启动线程，同时将 Thread 添加进容器中。
 
 循环 Thread 容器，调用 `join()` 方法，等待所有线程执行完毕。
+
+
+
+## 文件搜索
+
+### 公共类
+
+Result 用以存储搜索结果。
+
+### 串行版本
+
+SerialFileSearch 中的 `searchFiles()` 方法通过递归查询文件。
+
+### 并发版本
+
+- 为要处理的每个目录创建一个执行线程。
+- 将目录树分组，并为每个组创建执行线程。创建的组数将决定应用程序使用的执行线程数。
+- 使用与 JVM 的可用核数相同的线程数。
+
+算法将集中使用 I/O 操作。因为一次只有一个线程可以读取磁盘， 所以不是所有解决方案都会提高算法串行版本的性能，所以按照最后一种供选方案实现并发版本。
+
+ParallelGroupFileTask 实现 Runnable 接口，核心逻辑为循环从容器中获取一个 directory，递归搜索这个 directory 查找目标。发现目标或者容器中不再具有元素时结束循环。
+
+ParallelGroupFileSearch 中创建 Task、Thread，启动线程并循环检查是否已经发现目标。
+
+### ★ 小节
+
+以可用核心数作为创建线程数，创建的 Task 中引用同一个并发容器。
+
+在 Task 的 `run()` 方法中，循环尝试从并发容器中获得所需资源，并执行使用资源的逻辑。逻辑完成，或者容器中不再具有元素时结束循环，也就是完成了 `run()` 方法。
+
+启动线程的类中，循环中判断所有线程状态，以及线程是否完达到了目的。当发现有线程达到了目的，或者所有线程都已经 TERMINATED，则跳出循环。
+
+如果不是所有线程都已经处于 TERMINATED 状态（某个线程完成了目的，其余线程还在执行中），则循环调用 `interrupt()` 中断线程。
