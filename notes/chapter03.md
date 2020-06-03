@@ -92,13 +92,183 @@ IndividualDistanceTask 中将输入范例与训练数据集中某个范例之间
 
 
 
+## 客户端/服务器环境下的并发处理
+
+一个简单的客户端/服务器应用程序。
+
+- 客户端与服务器都使用套接字连接。
+
+- 客户端将以字符串形式发送查询，而服务器将用另一个字符串返回结果。
+
+- 服务器可以响应三种不同查询。
+
+  - Query
+
+    查询的格式是 `q;codCountry;codIndicator;year`，其中 codCountry 是国家代码，codIndicator 是指数代码，而 year 是一个可选参数，表示想要查询的年份。 服务器的响应信息将以单个字符串的形式返回。
+
+  - Report
+
+    查询的格式是 `r;codIndicator`，其中 codIndicator 是要制表的指数代码。服务器将以单个字符串形式响应各年份所有国家该指数的平均值。
+
+  - Stop
+
+    查询的格式是 `z`；接收到该命令时，服务器将停止执行。
+
+- 在其他情况下，服务器将返回一个错误消息。
 
 
 
+### 串行版本
+
+- common 包：命令组件，各种查询的命令。
+- wdi 包：数据实体、从 CSV 中加载数据的逻辑。
+- client 包：客户端逻辑，开启多个线程向服务端发起查询。
+- server 包：服务端逻辑，单线程循环处理客户端请求。
+
+执行一个循环，直到该服务器接收到一个 Stop 查询为止。
+
+循环中：
+
+- 接收来自客户端的查询。
+- 解析并分割该查询的要素。
+- 调用对应的命令。
+- 向客户端返回结果。
 
 
 
+### 并行版本
+
+为了使服务端获得更高的处理性能，现在将服务端改造为并发处理请求。
+
+类似的，对每个请求都开启一个线程也是不合适的，所以使用线程数固定的执行器，控制服务器所使用的资源。
+
+- client 包：客户端逻辑，开启多个线程向服务端发起查询。
+- server 包：服务端逻辑。
+  - RequestTask 中处理 Socket 信息。
+  - ConcurrentServer 中使用执行器执行 Task。
+- log 包：日志服务。Logger、LogTask 。
+  - `Logger.initializeLog()`  初始化日志文件，并开启一个线程，按照一定时间间隔写日志。
+  - `Logger.sendMessage()`  将日志信息存储在并发容器中。
+  - `Logger.writeLogs()`  从并发容器中取出日志信息，写入本地日志文件中。
+  - LogTask 实现 Runnable 接口，`run()` 方法中循环调用 `Logger.writeLogs()` 。
+- cache 包：缓存服务。CacheItem、ParallelCache、CleanCacheTask 。
+  - CacheItem 缓存对象实体。
+  - ParallelCache 中实现向并发容器中设置、获取缓存，以及清除缓存的方法。并启动一个线程定期调用清除缓存的方法。
+  - CleanCacheTask 实现 Runnable 接口，`run()` 方法中定期调用 ParallelCache 的清除缓存方法。
 
 
 
+## 其他重要方法
+
+Executors 类提供了其他一些创建 ThreadPoolExecutor 对象的方法。
+
+- `newCachedThreadPool()`
+
+  创建的 ThreadPoolExecutor 对象会重新使用空闲的工作线程，但是如果必要，也会创建一个新的工作线程。在此并没有最大工作线程数。
+
+- `newSingleThreadExecutor()`
+
+  创建一个仅使用单个工作线程的 ThreadPoolExecutor 对象。发送给执行器的任务会存储在一个队列中，直到该工作线程可以执行它们为止。
+
+
+
+ThreadPoolExecutor 中提供的获取执行器的相关状态信息的方法。
+
+- `getActiveCount()`
+
+  执行并发任务的大致任务数。线程池中可能有更多线程， 但是它们都是空闲的。
+
+- `getMaximumPoolSize()`
+
+  执行器可拥有的工作线程的最大数目。
+
+- `getCorePoolSize()`
+
+  执行器拥有的核心工作线程数目。这个数字决定了线程池中线程数的最小值。
+
+- `getPoolSize()`
+
+  该方法返回了当前线程池中的线程数。
+
+- `getLargestPoolSize()`
+
+  线程池在执行期间（曾经同时存在）的最大线程数。
+
+- `getCompletedTaskCount()`
+
+  执行器已经执行的任务数。
+
+- `getTaskCount()`
+
+  已预定执行任务的大致数目。
+
+- `getQueue().size()`
+
+  在任务队列中等待的任务数。
+
+比如使用 `newFixedThreadPool()` 方法创建的执行器，那么它的最大工作线程数和核心工作线程数相同。
+
+
+
+Java 中的两种类型的并发数据结构。
+
+- **阻塞型数据结构**
+
+  当调用某个方法但是类库无法执行该项操作时（试图获取某个元素而数据结构是空的），这种结构将阻塞线程直到这些操作可以执行。
+
+- **非阻塞型数据结构**
+
+  当调用某个方法但是类库无法执行该项操作时（因为结构为空或者为满），该方法会返回一个特定值或抛出一个异常。
+
+
+
+既有实现上述两种行为的数据结构，也有仅实现其中一种行为的数据结构。通常，阻塞型数据结构也会实现具有非阻塞型行为的方法，而非阻塞型数据结构并不会实现阻塞型方法。
+
+
+
+实现阻塞型操作的方法如下。
+
+- `put()`、`putFirst()`、`putLast()`
+
+  这些方法将一个元素插入数据结构。如果该数据结构已满，则会阻塞该线程，直到出现空间为止。
+
+- `take()`、`takeFirst()`、`takeLast()`
+
+  这些方法返回并且删除数据结构中的一个元素。如果该数据结构为空，则会阻塞该线程直到其中有元素为止。
+
+
+
+实现非阻塞型操作的方法如下。
+
+- `add()`、`addFirst()`、`addLast()`
+
+  这些方法将一个元素插入数据结构。如果该数据结构已满，则会抛出一个 IllegalStateException 异常。
+
+- `remove()`、`removeFirst()`、`removeLast()`
+
+  这些方法将返回并且删除数据结构中的一个元素。如果该结构为空，则这些方法将抛出一个 IllegalStateException  异常。
+
+- `element()`、`getFirst()`、`getLast()`
+
+  这些方法将返回但是不删除数据结构中的一个元素。如果该数据结构为空，则会抛出一个 IllegalStateException 异常。
+
+- `offer()`、`offerFirst()`、`offerLast()`
+
+  这些方法可以将一个元素插入数据结构。如果该结构已满，则返回一个 Boolean 值 false。
+
+- `poll()`、`pollFirst()`、`pollLast()`
+
+  这些方法将返回并且删除数据结构中的一个元素。 如果该结构为空，则返回 null 值。
+
+- `peek()`、`peekFirst()`、`peekLast()`
+
+  这些方法返回但是并不删除数据结构中的一个元 素。如果该数据结构为空，则返回 null 值。
+
+
+
+## ★ 小结
+
+在功能类中提供相关的功能方法，初始化时启动一个线程，开启的线程中循环处理有关逻辑。
+
+功能类可以提供静态方法，也可以作为一个属性提供给 Task 类。
 
