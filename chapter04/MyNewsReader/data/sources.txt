@@ -1,0 +1,10 @@
+The New York Times;http://rss.nytimes.com/services/xml/rss/nyt/World.xml
+Daily News;http://feeds.nydailynews.com/nydnrss/news/world
+Washington Post;http://feeds.washingtonpost.com/rss/world
+Los Angeles Times;http://www.latimes.com/world/rss2.0.xml
+Wall Street Journal;http://www.wsj.com/xml/rss/3_7085.xml
+Denver Post;http://feeds.denverpost.com/dp-news-breaking
+New York Post;http://nypost.com/news/feed/
+Newsday;http://www.newsday.com/cmlink/1.1284874
+BBC;http://feeds.bbci.co.uk/news/world/rss.xml
+Financial Times;http://www.ft.com/rss/world

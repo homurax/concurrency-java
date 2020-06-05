@@ -140,19 +140,51 @@ Task 类中实例化自定义执行器，`run()` 方法中循环从并发容器�
 
 ## 执行周期性任务
 
+实现一个 RSS 订阅程序，定期执行同一任务（阅读 RSS 订阅上的新闻）。
+
+- 在文件中存储 RSS 源。
+- 对每个 RSS 源，向执行器发送一个 Runnable 对象。每当执行器运行对象时，解析 RSS 源并且将其转换成一个含有 RSS 内容的 CommonInformationItem 对象列表。
+- 使用生产者/消费者模式将 RSS 新闻写入磁盘。生产者是执行器的任务，它们将每个 CommonInformationItem 写入到缓存中，缓存中仅存储新条目。消费者是一个独立线程， 它从缓存中读取新闻并将其写入磁盘。
 
 
 
+因为将在 ScheduledThreadPoolExeuctor 中执行这些任务，必须实现一个类用以扩展 FutureTask 类，以及实现 RunnableScheduledFuture 接口。该接口提供了 `getDelay()` 方法，该方法返回了距离任务下一 次执行所剩余的时间。
+
+FutureTask 类的 `runAndReset()` 方法执行任务并且重置其状态，这样任务就可以再次执行。
+
+在 ScheduledThreadPoolExecutor 类的队列中再次插入该任务：`executor.getQueue().add(this)`  。
 
 
 
+## 有关执行器的其他信息
+
+- `shutdown()`
+
+  必须显式调用该方法以结束执行器的执行，也可以重载该方法，加入一些代码释放执行器所使用的额外资源。
+
+- `shutdownNow()`
+
+  `shutdown()` 和 `shutdownNow()` 之间的区别在于 `shutdown()` 要等待执行器中所有处于等待状态的任务全部终结。
+
+- `submit()`、`invokeAll()`、`invokeAny()`
+
+  可以调用这些方法向执行器发送并发任务。如果需要在将任务插入到执行器任务队列之前或之后进行一些操作，就可以重载这些方法。
+
+  在任务进行排队之前或之后添加定制操作与在该任务执行之前或之后添加定制操作是不同的，这些操作要考虑到重载 `beforeExecute()` 方法和 `afterExecute()` 方法。
 
 
 
+ScheduledThreadPoolExecutor 类还有其他一些方法可用于执行周期性任务或者延迟之后的任务。
 
+- `schedule()`
 
+  该方法在给定延迟之后执行某个任务，且该任务仅执行一次。
 
+- `scheduleAtFixedRate()`
 
+  该方法按照给定周期执行一个周期性任务。
+
+  它与 `scheduleWithFixedDelay()` 方法的区别在于，对于后者而言，两次执行之间的延迟是指第一次执行 结束之后到第二次执行之前的时间；而对于前者而言，两次执行之间的延迟是指两次执行起始之间的时间。
 
 
 
