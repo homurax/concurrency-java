@@ -7,3 +7,6 @@
 [第 03 章 - 执行器](/notes/chapter03.md)
 
 [第 04 章 - 充分利用执行器](/notes/chapter04.md)
+
+[第 05 章 - 从任务获取数据：Callable 与 Future 接口](/notes/chapter05.md)
+
