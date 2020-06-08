@@ -10,3 +10,5 @@
 
 [第 05 章 - 从任务获取数据：Callable 与 Future 接口](/notes/chapter05.md)
 
+[第 06 章 - 运行分为多阶段的任务：Phaser 类](/notes/chapter06.md)
+
