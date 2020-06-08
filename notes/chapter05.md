@@ -68,11 +68,115 @@ Levenshtein 距离是指，将第一个字符串转换成第二个字符串所�
 
 ## 为文档集创建倒排索引
 
+### 每个文档一个任务
+
+如果为每个文档都发送一个任务，可以以如下方式处理结果。
+
+- 在发送每个任务后，显然这是不现实的。
+- 在所有任务完成后，这样就需要存储大量 Future 对象。
+- 在发送一组任务后，需要编写代码来同步两个操作。
+
+这些方法都有一个问题：以顺序方式来处理这些任务的结果。如果使用 `invokeAll()` 方法， 所处的情形就与第二点相似，必须等所有任务都结束。
+
+---
+
+一个可行的供选方案是创建其他一些任务来处理与每个任务相关的 Future 对象，而 Java 并发 API 提供了一种很好的解决方案，采用 CompletionService 接口及其实现 ExecutorCompletionService 类来实现这一解决案。
+
+CompletionService 对象带有一个执行器，它允许将任务生成和那些任务结果的使用分离开来。可以使用 `submit()` 方法向执行器发送任务，并在这些任务执行完毕后使用 `poll()` 或者 `take()` 方法来获取其结果。
+
+**Usage Examples.**
+
+> Suppose you have a set of solvers for a certain problem, each returning a value of some type `Result`, and would like to run them concurrently, processing the results of each of them that return a non-null value, in some method `use(Result r)`. You could write this as:
+
+```java
+void solve(Executor e, Collection<Callable<Result>> solvers)
+        throws InterruptedException, ExecutionException {
+
+    CompletionService<Result> ecs = new ExecutorCompletionService<Result>(e);
+    for (Callable<Result> s : solvers) {
+        ecs.submit(s);
+    }
+    int n = solvers.size();
+    for (int i = 0; i < n; ++i) {
+        Result r = ecs.take().get();
+        if (r != null) {
+            use(r);
+        }
+    }
+}
+```
+
+> Suppose instead that you would like to use the first non-null result of the set of tasks, ignoring any that encounter exceptions, and cancelling all other tasks when the first one is ready:
+
+```java
+void solve(Executor e, Collection<Callable<Result>> solvers)
+        throws InterruptedException {
+
+    CompletionService<Result> ecs = new ExecutorCompletionService<Result>(e);
+    int n = solvers.size();
+    List<Future<Result>> futures = new ArrayList<Future<Result>>(n);
+    Result result = null;
+    try {
+        for (Callable<Result> s : solvers) {
+            futures.add(ecs.submit(s));
+        }
+        for (int i = 0; i < n; ++i) {
+            try {
+                Result r = ecs.take().get();
+                if (r != null) {
+                    result = r;
+                    break;
+                }
+            } catch (ExecutionException ignore) {
+            }
+        }
+    } finally {
+        for (Future<Result> f : futures) {
+            f.cancel(true);
+        }
+    }
+
+    if (result != null) {
+        use(result);
+    }
+}
+```
 
 
 
+### ★ 小结
+
+- 为每个文档分配一个任务以解析文档并且生成其词汇表，而该任务将由 CompletionService 对象来执行。这些任务都在 IndexingTask 类中实现。
+
+- 创建两个线程来处理任务结果并且构造倒排索引。这些任务都在 InvertedIndexTask 类中实现。
+
+  `run()` 方法中使用来自 CompletionService 类的 ` take()` 方法获取与某一任务相关联的 Future 对象，在线程中断之前该循环将一直运行。当该线程中断之后，再次使用 `poll()` 方法处理所有待处理的 Future 对象。
+
+启动所有要素之后，使用 `shutdown()` 和 `awaitTermination()` 等待执行器结束。随后中断 InvertedIndexTask 线程，等待线程结束。
 
 
 
+## 其他相关方法
 
+AbstractExecutorService 接口：
+
+- `invokeAll (Collection> tasks, long timeout, TimeUnit unit)`
+
+  当作为参数传递的 Callable 任务列表中的所有任务完成执行，或者执行时间超出了第二、第三个参数指定的时间范围时，该方法返回一个与该 Callable 任务列表相关联的 Future 对象列表。
+
+- `invokeAny (Collection> tasks, long timeout, TimeUnit unit)`
+
+  当作为参数传递的 Callable 任务列表中的任务在超时之前完成其执行并且没有抛出异常时，该方法返回 Callable 任务列表中第一个任务的结果。如果超时，那么该方法抛出一个 TimeoutException 异常。
+
+
+
+CompletionService 接口：
+
+- `poll()`
+
+  从内部数据结构中检索并且删除自上一次调用 `poll()` 或 `take()` 方法以来下一个已完成任务的 Future 对象。如果没有任何任务完成，执行该方法将返回 null 值。
+
+- `take()`
+
+  如果没有任何任务完成，它将休眠该线程， 直到有一个任务执行完毕为止。
 
