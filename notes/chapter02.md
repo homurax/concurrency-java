@@ -5,7 +5,7 @@
 Java 使用 Thread 类实现执行线程。
 
 - 扩展 Thread 类并重载 `run()` 方法。
-- 实现 Runnable 接口，并将该类的对象传递给 Thread 对象的构造函数。
+- 实现 Runnable 接口，并将该类的对象传递给 Thread 对象的构造方法。
 
 通常更推荐第二种。
 
@@ -61,7 +61,7 @@ Thread 类有很多不同的方法。它有一种 `run()` 方法，实现线程�
 
   - `getName()`/`setName()`：
 
-    获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在 Thread 类的构造函数中建立。
+    获取或设置 Thread 对象的名称。这个名称是一个 String 对象，也可以在 Thread 类的构造方法中建立。
 
   - `getPriority()`/`setPriority()`
 
