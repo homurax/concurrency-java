@@ -37,7 +37,7 @@ Fork/Join 框架还有另一个关键特性，即工作窃取算法。该算法�
 
 ### Fork/Join 框架的局限性
 
-- 不再进行细分的基本问题的规模既不能过大也不能过小。按照 Java API 文档的说明，该基本问题的规模应该介于 100 到 10000 个基本计算步骤之间。
+- 不再进行细分的基本问题的规模既不能过大也不能过小。按照 Java API 文档的说明，该基本问题的规模应该介于 **100 到 10000** 个基本计算步骤之间。
 - 数据可用前，不应使用阻塞型 I/O 操作，例如读取用户输入或者来自网络套接字的数据。这样的操作将导致 CPU 核资源空闲，降低并行处理等级，进而使性能无法达到最佳。
 - 不能在任务内部抛出校验异常，必须编写代码来处理异常。对于未校验异常有一种特殊的处理方式。
 
@@ -75,7 +75,7 @@ Fork/Join 框架包括四个基本类。
 
 
 
-## k-means 聚类算法
+## k-means 聚类
 
 k-means 聚类算法将预先未分类的项集分组到预定的 K 个簇。
 
@@ -97,6 +97,172 @@ Task 的 `compute()` 方法中，判断进行逻辑处理，还是继续拆分 T
 使用 ForkJoinPool 的 `execute()` 方法以异步方式执行池中的任务，并且使用 Task 对象的 `join()` 方法等待其结束。
 
 最后 ForkJoinPool 对象使用 `shutdown()` 方法以结束其执行。
+
+
+
+## 数据筛选
+
+### TaskManager
+
+任务管理器，用来控制任务的撤销。使用 AtomicBoolean 变量确保所有任务都能以线程安全的方式访问它们的值。
+
+```java
+public void cancelTasks(RecursiveTask<?> sourceTask) {
+    if (cancelled.compareAndSet(false, true)) {
+        for (RecursiveTask<?> task : tasks) {
+            if (task != sourceTask) {
+                if (cancelled.get()) {
+                    task.cancel(true);
+                } else {
+                    tasks.add(task);
+                }
+            }
+        }
+    }
+}
+```
+
+`compareAndSet(false, true)` 方法将 AtomicBoolean 变量设置为 true，而且当且仅当该变量的当前值为 false 时才会返回 true 值。
+
+### IndividualTask
+
+用于实现 `findAny()` 方法的 RecursiveTask 类。
+
+如果任务需要处理的元素数比 size 属性值小，该方法直接进行对象查找。
+
+如果该方法找到了想要的对象，那么它将返回该对象并且使用 `cancelTasks()` 方法撤销剩余任务的执行。如果该方法没有找到想要的对象，那么它将返回 null 值。
+
+
+
+如果要处理的项数要比 size 属性规定的多，那么要创建两个子任务来分别处理其中的一半元素。然后，向任务管理器添加新创建的任务，并且删除实际任务。如果要撤销任务，即指仅撤销正在运行的任务。
+
+使用 `fork()` 方法以异步方式将任务发送给 ForkJoinPool，并且使用 `quietlyJoin()` 方法等待其执行结束。
+`join()` 方法和 `quietlyJoin()` 方法之间的区别在于，`join()` 启动之后，如果任务撤销，将抛出异常，或者在方法内部抛出一个未校验异常，而 `quietlyJoin()` 方法则不抛出任何异常。
+
+然后，从 TaskManager 类中删除子任务。使用 `join()` 方法获取任务的结果。
+
+```java
+protected CensusData compute() {
+    if (end - start <= size) {
+        for (int i = start; i < end && !Thread.currentThread().isInterrupted(); i++) {
+            CensusData censusData = data[i];
+            if (Filter.filter(censusData, filters)) {
+                System.out.println("Found: " + i);
+                manager.cancelTasks(this);
+                return censusData;
+            }
+        }
+    } else {
+        int mid = (start + end) / 2;
+        IndividualTask task1 = new IndividualTask(data, start, mid, manager, size, filters);
+        IndividualTask task2 = new IndividualTask(data, mid, end, manager, size, filters);
+        manager.addTask(task1);
+        manager.addTask(task2);
+        manager.deleteTask(this);
+        task1.fork();
+        task2.fork();
+        task1.quietlyJoin();
+        task2.quietlyJoin();
+        manager.deleteTask(task1);
+        manager.deleteTask(task2);
+
+        try {
+            CensusData res = task1.join();
+            if (res != null) {
+                return res;
+            }
+            manager.deleteTask(task1);
+        } catch (CancellationException ignored) {
+        }
+        try {
+            CensusData res = task2.join();
+            if (res != null) {
+                return res;
+            }
+            manager.deleteTask(task2);
+        } catch (CancellationException ignored) {
+        }
+    }
+    return null;
+}
+```
+
+
+
+### ListTask
+
+用于实现 `findAll()` 方法的 RecursiveTask 类，逻辑与 IndividualTask 类似。
+
+```java
+protected List<CensusData> compute() {
+    List<CensusData> ret = new ArrayList<>();
+    List<CensusData> tmp;
+    if (end - start <= size) {
+        for (int i = start; i < end; i++) {
+            CensusData censusData = data[i];
+            if (Filter.filter(censusData, filters)) {
+                ret.add(censusData);
+            }
+        }
+    } else {
+        int mid = (start + end) / 2;
+        ListTask task1 = new ListTask(data, start, mid, manager, size, filters);
+        ListTask task2 = new ListTask(data, mid, end, manager, size, filters);
+        manager.addTask(task1);
+        manager.addTask(task2);
+        manager.deleteTask(this);
+        task1.fork();
+        task2.fork();
+        task2.quietlyJoin();
+        task1.quietlyJoin();
+        manager.deleteTask(task1);
+        manager.deleteTask(task2);
+
+        try {
+            tmp = task1.join();
+            if (tmp != null) {
+                ret.addAll(tmp);
+            }
+            manager.deleteTask(task1);
+        } catch (CancellationException ignored) {
+        }
+        try {
+            tmp = task2.join();
+            if (tmp != null) {
+                ret.addAll(tmp);
+            }
+            manager.deleteTask(task2);
+        } catch (CancellationException ignored) {
+        }
+    }
+
+    return ret;
+}
+```
+
+
+
+### ★ 小结
+
+`compute()` 方法拆分 Task 的部分也需要获得结果时：
+
+1. `fork()`: 提交任务。
+2. `quietlyJoin()`: 等待执行结束。
+3. `join()`: 获取任务的结果。
+
+
+
+## 归并排序
+
+
+
+
+
+
+
+
+
+
 
 
 
