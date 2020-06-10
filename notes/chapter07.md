@@ -254,23 +254,103 @@ protected List<CensusData> compute() {
 
 ## 归并排序
 
+归并排序通常使用分治方法实现，为实现归并排序算法，将未排序的列表划分为仅有一个元素的子列表。然后，将这些未排序的子列表合并以产生排序后的子列表，直到将所有这些子列表处理完毕。
 
 
 
+### MergeSortTask
+
+如果起始索引和终止索引之间的差距大于或等于 1024，那么使用 `compute()` 方法，将任务分割成两个子任务来分别处理原集合的两个子集。两个任务采用 `fork()` 方法以异步方式将任务发送给 ForkJoinPool。
+
+否则，执行 `SerialMergeSorg.mergeSort()` 对数组进行排序，然后调用 `tryComplete()` 方法。子任务执行完毕之后，该方法将从内部调用 `onCompletion()` 方法。
+
+```java
+public class MergeSortTask extends CountedCompleter<Void> {
+
+    private final Comparable[] data;
+    private final int start;
+    private final int end;
+    private int middle;
+
+    public MergeSortTask(Comparable[] data, int start, int end, MergeSortTask parent) {
+        super(parent);
+        this.data = data;
+        this.start = start;
+        this.end = end;
+    }
+
+    @Override
+    public void compute() {
+        if (end - start >= 1024) {
+            middle = (start + end) >>> 1;
+            MergeSortTask task1 = new MergeSortTask(data, start, middle, this);
+            MergeSortTask task2 = new MergeSortTask(data, middle, end, this);
+            addToPendingCount(1);
+            task1.fork();
+            task2.fork();
+        } else {
+            SerialMergeSort.mergeSort(data, start, end);
+            tryComplete();
+        }
+    }
+
+    @Override
+    public void onCompletion(CountedCompleter<?> caller) {
+
+        if (middle == 0) {
+            return;
+        }
+
+        int length = end - start + 1;
+        int i = start;
+        int j = middle;
+        int index = 0;
+        Comparable[] tmp = new Comparable[length];
+
+        while ((i < middle) && (j < end)) {
+            if (data[i].compareTo(data[j]) <= 0) {
+                tmp[index++] = data[i++];
+            } else {
+                tmp[index++] = data[j++];
+            }
+        }
+
+        while (i < middle) {
+            tmp[index++] = data[i++];
+        }
+
+        while (j < end) {
+            tmp[index++] = data[j++];
+        }
+
+        for (index = 0; index < (end - start); index++) {
+            data[index + start] = tmp[index];
+        }
+    }
+
+}
+```
 
 
 
+## Fork/Join 框架的其他方法
 
+将任务发送给池：
 
+- `execute()`
 
+  将任务发送给 ForkJoinPool 之后立即返回。
 
+- `invoke()`
 
+  将任务发送给 ForkJoinPool 后，当任务完成执行后方可返回。
 
+- `submit()`
 
+  将任务发送给 ForkJoinPool 之后立即返回一个 Future 对象，用以控制任务的状态并且获得其结果。
 
+ForkJoinTask 类为 `invoke()` 方法提供了一种替代方案，即 `quietlyInvoke()` 方法。这两种方法的主要区别在于，`invoke()` 方法返回任务执行的结果或者在必要时抛出异常，而 `quietlyInvoke()` 方法不返回任务的结果，也不抛出任何异常。
 
-
-
-
+ForkJoinTask 类提供了 `get(long timeout, TimeUnit unit)` 方法来获取某个任务返回的结果。该方法在参数中指定了等待任务结果的时间周期。如果该任务在这一时间周期结束之前完成了执行，则该方法返回相应结果。否则，该方法抛出一个 TimeoutException 异常。
 
 
