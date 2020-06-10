@@ -13,3 +13,5 @@
 [第 06 章 - 运行分为多阶段的任务：Phaser 类](/notes/chapter06.md)
 
 [第 07 章 - 优化分治解决方案：Fork/Join 框架](/notes/chapter07.md)
+
+[第 08 章 - 使用并行流处理大规模数据集：MapReduce 模型](/notes/chapter08.md)
