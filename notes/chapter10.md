@@ -142,13 +142,31 @@ SubmissionPublisher 实现了 Flow.Publisher 接口。它还使用 Flow.Subscrip
 
 ### ★ 小结
 
-订阅者实现 Subscriber 接口，重写相关方法（完成订阅、消费、异常处理）。订阅者与生产者之前通过 Subscription 交互（要求更多的项目或者不再需要）。
+Subscriber：实现相关方法（完成订阅、消费、异常处理）的逻辑。持有 Subscription，订阅者与生产者之前通过 Subscription 交互（要求更多的项目或者不再需要）。
 
 向 SubmissionPublisher 中注册订阅者，Task 持有 SubmissionPublisher，通过 `submit()` 方法发送项目。可以启动多个 Task 来进行并发。
 
 
 
+## 新闻系统
 
+如果 SubmissionPublisher 提供的功能不符合需求，那么必须实现自己的发布者和订阅关系。
+
+每则新闻将与一个类别相关联。订阅者将订阅一个或多个类别，而发布者只会向每个订阅相应类别的订阅者发送新闻。
+
+
+
+### ★ 小结
+
+Subscriber：持有 subscription、categories。
+
+Subscription：持有 categories，使用 AtomicLong 记录请求条目数量。
+
+ConsumerData：封装一组 Subscriber 和 Subscription。
+
+Publisher：持有 consumers 和 executor。
+
+Task：实现 Runnable。完成判断、发布者把新条目发送给订阅者（ `Subscriber.onNext()` ）、请求数目减少的逻辑。
 
 
 
