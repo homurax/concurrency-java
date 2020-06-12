@@ -315,13 +315,224 @@ LongAccumulator 类和 LongAdder 类很类似，但是也有一个非常明显�
 
 ## 同步机制
 
+Java 语言提供的最基本的同步机制是 synchronized 关键字。该关键字可应用于某个方法或者某个代码块。对于第一种情况，一次只有一个线程可以执行该方法。对于第二种情况，要指定一个对某个对象的引用。在这种情况下，同时只能执行被某一对象保护的一个代码块。
+
+Java 也提供了其他一些同步机制。
+
+- Lock 接口及其实现类
+
+  该机制允许实现一个临界段，保证只有一个线程执行该代码块。
+
+- Semaphore
+
+  实现了由 Edsger Dijkstra 提出的著名的信号量同步机制。
+
+- CountDownLatch 
+
+  允许实现这样的场景：一个或多个线程等待其他线程结束。
+
+- CyclicBarrier
+
+  允许将不同的任务同步到某个共同的节点。
+
+- Phaser
+
+  允许分为多个阶段实现并发任务。
+
+- Exchanger
+
+  允许在两个线程之间实现一个数据交换点。
+
+- CompletableFuture
+
+  它扩展了执行器任务的 Future 机制，以一种异步方式生成任务的结果。可以指定任务在结果生成之后执行，这样就可以控制任务的执行顺序。
+
+
+
+### Semaphore
+
+信号量机制是 Edsger Dijkstra 于 1962 年提出的，用于控制对一个或多个共享资源的访问。
+
+该机制基于一个内部计数器以及两个名为 `wait()` 和 `signal()` 的方法。
+
+当一个线程调用了 `wait()` 方法时，如果内部计数器的值大于 0，那么信号量对内部计数器做递减操作，并且该线程获得对该共享资源的访问。
+
+如果内部计数器的值为 0，那么线程将被阻塞，直到某个线程调用 `singal()` 方法为止。
+
+当一个线程调用了 `signal()` 方法时，信号量将会检查是否有某些线程处于等待状态（它们已经调用了 `wait()` 方法）。
+
+如果没有线程等待，它将对内部计数器做递增操作。如果有线程在等待信号量，就获取这其中的一个线程，该线程的 `wait()` 方法结束返回并且访问共享资源。
+
+其他线程将继续等待，直到轮到自己为止。
+
+
+
+在 Java 中，信号量在 Semaphore 类中实现。`wait()` 方法被称作 `acquire()`，而 `signal()` 方法被称作 `release()` 。
+
+
+
+类似 ReentrantLock，临界段开始调用 `semaphore.acquire()` ，在 finally 代码块中调用 `semaphore.release()`。
+
+
+
+### CountDownLatch
+
+该类提供了一种等待一个或多个并发任务完成的机制。它有一个内部计数器，必须使用要等待的 任务数初始化。`await()` 方法休眠调用线程，直到内部计数器为 0，并且使用 `countDown()` 方法对该内部计数器做递减操作。
+
+
+
+Task 中完成任务后调用 `countDown()`，主线程中调用 `await()` 等待，从而实现主线程中阻塞到所有 Task 完成后继续进行。
+
+Task 中任务开始前调用 `await()` 等待，主线程中调用 `countDown()`，从而实现主线程中控制所有 Task 同时执行。
+
+
+
+### CyclicBarrier
+
+该类允许将一些任务同步到某个共同点。所有的任务都在该点等待，直到任务全部到达该点为止。
+
+从内部来看，该类还管理了一个内部计数器，用于记录尚未到达该点的任务。
+
+当一个任务到达指定点时，它要执行 `await()` 方法以等待其他任务。
+
+当所有任务都到达时，CyclicBarrier 对象将它们唤醒，这样就能够继续执行。
+
+当所有的参与方都到达后，该类允许执行另一个任务。为了实现这一点，要在该对象的构造方法中指定一个 Runnable 对象。
+
+
+
+```java
+public CyclicBarrier(int parties, Runnable barrierAction)
+```
+
+当 parties 个 Task 中调用了 `barrier.await()` 后，就会执行 barrierAction 。
+
+
+
+### CompletableFuture
+
+这是在 Java 8 并发 API 中引入的一种同步机制，在 Java 9 中又有了一些新方法。
+
+它扩展了 Future 机制，为其赋予了更强的功能和更大的灵活性。它允许实现一个事件驱动的模型，链接那些只有当其他任务执行完毕后才执行的任务。
+
+
+
+与 Future 接口相同，CompletableFuture 也必须采用操作要返回的结果类型进行参数化。
+
+和 Future 对象一样，CompletableFuture 类表示的是异步计算的结果，只不过 CompletableFuture 的结果可以由任意线程确立。
+
+当计算正常结束时，该类采用 `complete()` 方法确定结果，而当计算出现异常时，则采用 `completeExceptionally()` 方法。
+
+如果两个或者多个线程调用同一 CompletableFuture 的 `complete()`方法或 `completeExceptionally()` 方法，那么只有第一个调用会起作用。
+
+
+除了 `complete()` 方法，也可以使用 `runAsync()` 方法或者 `supplyAsync()` 创建一个任务结果。
+
+`runAsync()` 方法执行一个 Runnable 对象并且返回 `CompletableFuture<Void>`，这样计算就不能再返回任何结果了。
+
+`supplyAsync()` 方法执行了 Supplier 接口的一个实现，它采用本次计算要返回的类型进行参数化。
+
+该 Supplier 接口提供了 `get()` 方法。在该方法中，需要包含任务代码并且返回任务生成的结果。
 
 
 
 
 
+该类提供了大量方法，允许通过实现一个事件驱动的模型组织任务的执行顺序，一个任务只有在其之前的任务完成之后才会开始。这其中包括如下方法。
+
+- `thenApplyAsync()`
+
+  方法接收 Function 接口的一个实现作为参数。该函数将在调用 CompletableFuture 完成后执行。
+
+  方法将返回 CompletableFuture 以获得 Fuction 的结果。
+
+- `thenComposeAsync()`
+
+  方法和 `thenApplyAsync()` 方法相似，但是当供给函数也返回 CompletableFuture 时很有用。
+
+- `thenAcceptAsync()`
+
+  方法和前一个方法相似，只不过其参数是 Consumer 接口的一个实现，计算不会返回结果。
+
+- `thenRunAsync()`
+
+  方法和前一个等价，只不过在这种情况下接收一个 Runnable 对象作为参数。
+
+- `thenCombineAsync()`
+
+  该方法接收两个参数。
+
+  第一个参数为另一个 CompletableFuture 实例，另一个参数是 BiFunction 接口的一个实现。
+
+  该 BiFunction 接口实现将在两个 CompletableFuture（当前调用的和参数中的）都完成后执行。
+
+  该方法将返回 CompletableFuture 以获取 BiFunction 的结果。
+
+- `runAfterBothAsync()`
+
+  方法接收两个参数。
+
+  第一个参数为另一个CompletableFuture，而第二个参数为 Runnable 接口的一个实现，它将在两个 CompletableFuture（当前调用的和参数中的）都完成后执行。
+
+- `runAfterEitherAsync()`
+
+  方法与前一个方法等价，只不过当其中一个 CompletableFuture 对象完成之后才会执行 Runnable 任务。
+
+- `allOf()`
+
+  方法接收 CompletableFuture 对象的一个变量列表作为参数。
+
+  它将返回一个 `CompletableFuture<Void>` 对象，而该对象将在所有的 CompletableFuture 对象都完成之后返回其结果。
+
+- `anyOf()`
+
+  方法和前一个方法等价，只是返回的 CompletableFuture 对象会在其中一个 CompletableFuture 对象完成之后返回其结果。
 
 
+
+最后，如果想要获取 CompletableFuture 返回的结果，可以使用 `get()` 方法或者 `join()`方法。这两个方法都会阻塞调用线程，直到 CompletableFuture 完成之后返回其结果。
+
+这两个方法之间的主要区别在于，`get()` 方法抛出 ExecutionException（一个校验异常），而 `join()` 方法抛出 RuntimeException（一个未校验异常）。
+
+因此，在不抛出异常的 lambda 内部，使用 `join()` 方法更为方便。
+
+
+
+带有 Async 后缀的方法将使用 `ForkJoinPool.commonPool` 实例以并发方式执行。
+
+不带 Async 后缀的版本将以串行方式执行。
+
+带 Async 后缀并且以一个执行器实例作为额外参数的版本中，CompletableFuture 将在作为参数传递的执行器中以异步方式执行。
+
+
+
+Java 9 增加了一些方法，为 CompletableFuture 类赋予了更强的功能。
+
+- `defaultExecutor()`
+
+  方法用于返回并不接收 Executor 作为参数的那些异步操作的默认执行器。通常，它将是 `ForkJoinPool.commonPool()` 方法的返回值。
+
+- `copy()`
+
+  方法创建 CompletableFuture 对象的一个副本。如果原来的 CompletableFuture 正常完成，则副本方法也将正常完成并返回相同的值。
+
+  如果原来的 CompletableFuture 异常完成，则副本方法也异常完成，并且抛出 CompletionException 异常。
+
+- `completeAsync()`
+
+  方法接收一个 Supplier 对象作为参数（还可以选择 Executor）。借助 Supplier 的结果完成  CompletableFuture。
+
+- `orTimeout()`
+
+  方法接收一段时延。如果 CompletableFuture 在这段时间之后没有完成，那么抛出 TimeoutException 异常并异常完成。
+
+- `completeOnTimeout()`
+
+  方法与上一个方法相似，只不过它在作为参数的值的范围内正常完成。
+
+- `delayedExecutor()`
+
+  方法返回一个 Executor，该执行器在执行指定时延之后执行某一任务。
 
 
 
