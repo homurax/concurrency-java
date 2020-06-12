@@ -5,7 +5,7 @@ import java.lang.invoke.VarHandle;
 
 public class VarHandleTask implements Runnable {
 
-    private VarHandleData data;
+    private final VarHandleData data;
 
     public VarHandleTask(VarHandleData data) {
         this.data = data;

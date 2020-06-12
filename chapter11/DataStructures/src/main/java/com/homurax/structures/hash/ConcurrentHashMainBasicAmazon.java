@@ -22,15 +22,12 @@ public class ConcurrentHashMainBasicAmazon {
         System.out.println(products1996.size());
         showData(products1996);
 
-        products1996.forEach(10, (product, reviews) -> {
-            products1995.merge(product, reviews, (reviews1, reviews2) -> {
-                System.out.println("Merge for: " + product.getAsin());
-                reviews1.addAll(reviews2);
-                return reviews1;
-            });
-        });
+        products1996.forEach(10, (product, reviews) -> products1995.merge(product, reviews, (reviews1, reviews2) -> {
+            System.out.println("Merge for: " + product.getAsin());
+            reviews1.addAll(reviews2);
+            return reviews1;
+        }));
         showData(products1995);
-
     }
 
     private static void showData(ConcurrentHashMap<BasicProduct, ConcurrentLinkedDeque<BasicReview>> products) {
@@ -42,7 +39,6 @@ public class ConcurrentHashMainBasicAmazon {
         System.out.println(listReviews.size());
         listReviews.forEach(review -> System.out.print(review.getUser() + ":" + review.getValue() + ";"));
         System.out.println();
-
     }
 
 }

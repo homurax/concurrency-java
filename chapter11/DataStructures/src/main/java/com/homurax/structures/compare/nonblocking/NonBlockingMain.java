@@ -14,10 +14,9 @@ public class NonBlockingMain {
 
         int numTasks = 4;
 
-        ConcurrentLinkedQueue<Item> queue = new ConcurrentLinkedQueue<Item>();
+        ConcurrentLinkedQueue<Item> queue = new ConcurrentLinkedQueue<>();
 
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
-                .newCachedThreadPool();
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
         Date start, end;
         start = new Date();

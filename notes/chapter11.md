@@ -202,6 +202,123 @@ LinkedBlockingDeque 具有比 LinkedBlockingQueue 更多的功能，但是其开
 
   这些方法允许应用一个 `reduce()` 操作转换键值对、键，或者将其整个哈希表作为流处理。
 
+- `reduceToInt()`、`reduceToDouble()`、`reduceToLong()`
+- `reduceEntriesToDouble()`、`reduceEntriesToInt()`、`reduceEntriesToLong()`
+- `reduceKeysToDouble()`、`reduceKeysToInt()`、`reduceKeysToLong()`
+- `reduceValuesToDouble()`、`reduceValuesToInt()`、`reduceValuesToLong()`
+
+
+
+### 原子变量
+
+原子变量是在 Java 1.5 中引入的，用于提供针对 integer、long、boolean、reference 和 Array 对象的原子操作。它们提供了一些方法来递增值、递减值、确定值、返回值，或者在其当前值等于预定义值时确定值。原子变量提供了与 volatile 关键字相似的保障。
+
+Java 8 中增加了四个新类，即 DoubleAccumulator、DoubleAdder、LongAccumulator 和 LongAdder。
+
+LongAdder 与 AtomicLong 类似，但是当经常更新来自不同线程的累加操作并且只需要在操作的末端给出结果时，具有更好的性能。
+
+- `add()`
+  为计数器增加参数中指定的值。
+
+- `increment()`
+
+  相当于 `add(1)` 。
+
+- `decrement()`
+
+  相当于 `add(-1)` 。
+
+- `sum()`
+
+  该方法返回计数器的当前值。
+
+DoubleAdder 类并没有 `increment()` 和 `decrement()` 方法。
+
+
+
+LongAccumulator 类和 LongAdder 类很类似，但是也有一个非常明显的区别。它们都有一个可以指定如下两个参数的构造函数。
+
+- 内部计数器的标识值。
+- 一个将新值累加到累加器的函数。
+
+该函数并不依赖于累加的顺序。在这种情况下，最重要的方法就是如下两种。
+
+- `accumulate()`
+
+  该方法接收一个long 值作为参数。它应用函数对计数器进行递增或递减操作，使之成为当前值和参数指定值。
+
+- `get()`
+
+  返回计数器的当前值。
+
+
+
+### 变量句柄
+
+**变量句柄（variable handle）**是一种对变量、静态域或数组元素的动态型引用，使之可以用多种不同的模式访问该变量。
+
+例如，可以在并发应用程序中对变量进行访问保护，实现对该变量的原子访问。
+
+在此之前，只能通过原子变量获得这样的行为，但是现在可以使用变量句柄获得同样的功能，而不需要采用任何同步机制。
+
+这是 Java 9 中引入的一种新特性，由 VarHandle 类提供。变量句柄有如下几种访问方法。
+
+- **读取访问模式**：根据不同方法，该模式允许按照不同的内存排序规则读取变量的值。
+
+  - `get()`
+
+    变量视为非易失性变量读取。
+
+  - `getVolatile()`
+
+    将变量作为易失性变量来读取。
+
+  - `getAcquire()`
+
+    确保对该变量的其他访问在该语句之前不会因为优化方面的原因而重新排序。
+
+  - `getOpaque()`
+
+    与 `getAcquire()` 类似，但是它仅对当前线程有影响。
+
+- **写入访问模式**：该模式允许按照不同的内存排序规则写入变量的值。
+
+  - `set()`
+  - `setVolatile()`
+  - `setRelease()`
+  - `setOpaque()`
+
+- **原子更新访问模式**：这种模式获得与原子变量类似的功能和操作，例如比较变量的值。
+
+  - `compareAndSet()`
+
+    如果作为参数传递的预期值和变量的当前值相等，那么改变变量的值， 就像变量是被声明为易失性变量一样。
+
+  - `weakCompareAndSet() `和 `weakCompareAndSetPlain()`
+
+    如果作为参数传递的预期值与变量的当前值相等，那么自动将变量的当前值替换为新值。
+
+    第一种法将变量视为一个易失性 变量，而第二种法将变量视为一个非易失性变量。
+
+- **数值型原子更新访问模式**：这种模式以原子方式修改数值。
+
+  - `getAndAdd()`
+
+    增加变量的值并且返回之前的值，因为该变量被原子自动声明为一个易失性变量。
+
+- **位原子更新访问模式**：这种模式以原子方式按位修改值。
+
+  - `getAndBitwiseOr()`
+  - `getAndBitwiseAnd()`
+
+
+
+## 同步机制
+
+
+
+
+
 
 
 

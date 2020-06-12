@@ -4,5 +4,4 @@ public class VarHandleData {
 
     public double safeValue;
     public double unsafeValue;
-
 }

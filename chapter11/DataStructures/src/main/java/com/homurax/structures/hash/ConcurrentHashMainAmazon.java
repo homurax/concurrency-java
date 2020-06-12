@@ -98,8 +98,6 @@ public class ConcurrentHashMainAmazon {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
 }
