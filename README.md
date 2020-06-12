@@ -21,3 +21,6 @@
 [第 10 章 - 异步流处理：反应流](/notes/chapter10.md)
 
 [第 11 章 - 并发数据结构和同步工具](/notes/chapter11.md)
+
+[第 12 章 - 测试与监视并发应用程序](/notes/chapter12.md)
+
